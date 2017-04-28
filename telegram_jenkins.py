@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+def lock_file(fname):
+    import fcntl
+    _lock_file = open(fname, 'a+')
+    try:
+        fcntl.flock(_lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        return "Процесс уже используется."
+    return _lock_file
+
+lock = lock_file('telegram_jenkins.py')
+
 import time
 
 import jenkinsapi
