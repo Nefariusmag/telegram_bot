@@ -49,24 +49,8 @@ class Var:
         self.issue_select = None
         self.issue_id = None
         self.tag = None
+        self.open_close = None
 
-class Portlet:
-    def __init__(self, name):
-        self.open_close = name
-        self.languagepack = None
-        self.support_mail = None
-        self.hook_search = None
-        self.subsystem_search = None
-        self.iframe = None
-        self.hook_asset = None
-        self.urc_theme = None
-        self.mainpagegeo = None
-        self.slider = None
-        self.npa = None
-        self.inspinia_theme = None
-        self.login_hook = None
-        self.reports_display = None
-        self.notification = None
 
 @bot.message_handler(commands=['gistek_build_arm'])
 def stend_select(message):
@@ -233,7 +217,7 @@ def action_select(message):
     global name_user
     name_user = "{}({}): ".format(message.chat.username, message.chat.id)
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy (not work yet)')
+    markup.add('Build', 'Deploy')
     msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
     bot.register_next_step_handler(msg, portal_app_select)
 
@@ -248,11 +232,95 @@ def portal_app_select(message):
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("languagePackRU", "support-mail-portlet", "hook-search", "subsystem-search", "hook-asset-publisher", "urc-theme", "mainpageGEO", "slider", "npa-loader", "inspinia-theme", "login-hook", "reports-display-portlet")
             msg = bot.reply_to(message, "Выберите портлет для сборки:", reply_markup=markup)
-            bot.register_next_step_handler(msg, portal_job_jenkins)
+            bot.register_next_step_handler(msg, portal_app_2_select)
+        if var.build_deloy == "Deploy":
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add('REA_TEST', 'PK', 'PI')
+            msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_public_internal_select)
     except Exception as e:
         bot.reply_to(message, 'oooops1')
 
+def portal_public_internal_select(message):
+    try:
+        chat_id = message.chat.id
+        stend = message.text
+        var = user_dict[chat_id]
+        var.stend = stend
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('public', 'internal')
+        msg = bot.reply_to(message, "Открытая или закрытая часть портала?", reply_markup=markup)
+        bot.register_next_step_handler(msg, portal_app_2_select)
+    except Exception as e:
+        bot.reply_to(message, 'oooops2')
+
+def portal_app_2_select(message):
+    try:
+        chat_id = message.chat.id
+        open_close = message.text
+        var = user_dict[chat_id]
+        var.open_close = open_close
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add("plugin_inspinia-theme", "plugin_reports-display-portlet", "plugin_login-hook", "plugin_notification-portlet", "plugin_languagePack", "plugin_suppport-mail", "plugin_iframe", "plugin_subsystem-search", "plugin_urc_theme", "plugin_hook-search", "plugin_asset-publisher", "plugin_mainpageGeo", "plugin_slider", "plugin_npa")
+        msg = bot.reply_to(message, "Выберите какой портлет будем обновлять:", reply_markup=markup)
+        bot.register_next_step_handler(msg, portal_tag_select)
+    except Exception as e:
+        bot.reply_to(message, 'oooops3')
+
+def portal_tag_select(message):
+    try:
+        chat_id = message.chat.id
+        arm = message.text
+        var = user_dict[chat_id]
+        var.arm = arm
+        msg = bot.reply_to(message, "Введите номер версии (тег):")
+        bot.register_next_step_handler(msg, portal_job_jenkins)
+    except Exception as e:
+        bot.reply_to(message, 'oooops4')
+
 def portal_job_jenkins(message):
+    try:
+        chat_id = message.chat.id
+        tag = message.text
+        var = user_dict[chat_id]
+        var.tag = tag
+        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+        if var.arm == "plugin_npa":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_npa": str(var.tag)}
+        if var.arm == "plugin_inspinia-theme":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_inspinia_theme": str(var.tag)}
+        if var.arm == "plugin_reports-display-portlet":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_reports_display_portlet": str(var.tag)}
+        if var.arm == "plugin_login-hook":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_login_hook": str(var.tag)}
+        if var.arm == "plugin_notification-portlet":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_notification_portlet": str(var.tag)}
+        if var.arm == "plugin_languagePack":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_languagePack": str(var.tag)}
+        if var.arm == "plugin_suppport-mail":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_support_mail": str(var.tag)}
+        if var.arm == "plugin_iframe":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_iframe": str(var.tag)}
+        if var.arm == "plugin_subsystem-search":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_subsystem_search": str(var.tag)}
+        if var.arm == "plugin_urc_theme":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_urc_theme": str(var.tag)}
+        if var.arm == "plugin_hook-search":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_hook_search": str(var.tag)}
+        if var.arm == "plugin_asset-publisher":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_hook_asset_publisher": str(var.tag)}
+        if var.arm == "plugin_mainpageGeo":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_mainpageGeo": str(var.tag)}
+        if var.arm == "plugin_slider":
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_slider": str(var.tag)}
+        print(name_user + "cтучится в jenkins чтобы обновить " + str(var.arm) + " на портале" + str(var.stend) + " в " + str(var.open_close))
+        jenkins.build_job('GISTEK_Portal/Update_App', params)
+        print(name_user + "на портале " + str(var.stend) + " обновляется " + str(var.arm))
+        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + " на портале " + str(var.stend) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+    except Exception as e:
+        bot.reply_to(message, 'oooops5')
+
+def portal_build_job_jenkins(message):
     try:
         chat_id = message.chat.id
         arm = message.text
@@ -264,7 +332,7 @@ def portal_job_jenkins(message):
         print(name_user + "собирает " + str(var.arm))
         bot.send_message(message.chat.id, "..еще 5 минуточек и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        bot.reply_to(message, 'oooops6')
 
 @bot.message_handler(commands=['gistek_mobile'])
 def action_select(message):
