@@ -19,9 +19,13 @@ pip3 install cherrypy
 pip3 install jenkinsapi
 
 Добавить в крон:
-*/15 * * * * cd /home/derokhin/GISTEK/DevOps/work/rest_api_jenkins && ./telegram_jenkins.py >> log
+*/15 * * * * cd ~/telegram_bot && ./telegram_jenkins.py
 
 --History:
+
+---2.5
+
+Встроил логирование, теперь не надо париться с выводом логов в какой-то специальный файл
 
 ---2.4
 
