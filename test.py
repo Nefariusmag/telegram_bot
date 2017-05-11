@@ -17,10 +17,6 @@ import time
 import jenkinsapi
 from jenkinsapi.jenkins import Jenkins
 
-# import datetime
-# now_time = datetime.datetime.now()
-# time = str(now_time.day) + "-" + str(now_time.month) + "-" + str(now_time.year) + "_" + str(now_time.hour) + ":" + str(now_time.minute) + ":" + str(now_time.second) + " "
-
 import logging
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO, filename = u'telegram_bot.log')
 
@@ -29,34 +25,37 @@ import telebot
 from telebot import types
 
 jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
 bot = telebot.TeleBot(config.token)
 
 logging.warning(u'В jenkins авторизовались')
 
 @bot.message_handler(commands=['start'])
-def handle_start_help(message):
+def handle_start(message):
     text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     bot.send_message(message.chat.id, "Привет, друг. Тут нет ничего интересного - уходи.")
 
 @bot.message_handler(commands=['help'])
-def handle_start_help(message):
+def handle_help(message):
     text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     bot.send_message(message.chat.id, "Вот такой вот стремный /help.")
 
 @bot.message_handler(commands=['helppp'])
-def handle_start_help(message):
+def handle_true_help(message):
     text = "{}({}): решил почитать настоящий /help ;-)".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, """
-Что я умею!
+    bot.send_message(message.chat.id, """Что я умею!
+
 Сборка АРМ: /gistek_build_arm \n
 Подсистема Пентахо: /gistek_pentaho \n
 Подсистема Портал: /gistek_portal  \n
 Подсистема мобильного приложения: /gistek_mobile \n
 Подсистема ПИЗИ: /gistek_pizi \n
-Подсистема ПОИБ: /gistek_poib""")
+Подсистема ПОИБ: /gistek_poib \n
+
+Синхронизация данных между стендами: /sync""")
 
 user_dict = {}
 
@@ -69,6 +68,31 @@ class Var:
         self.issue_id = None
         self.tag = None
         self.open_close = None
+
+@bot.message_handler(commands=['sync'])
+def sync_start(message):
+    global name_user
+    name_user = "{}({}):".format(message.chat.username, message.chat.id)
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp')
+    msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
+    bot.register_next_step_handler(msg, sync_select)
+
+def sync_select(message):
+    try:
+        chat_id = message.chat.id
+        stend = message.text
+        var = Var(stend)
+        user_dict[chat_id] = var
+        text = "{} запускает {}".format(name_user, var.stend)
+        logging.warning( u"%s", text)
+        jenkins_dkp.build_job(str(var.stend))
+    except Exception as e:
+        text = "{} неведомая херня, но джоба выполняется, прячу багу".format(name_user)
+        logging.warning( u"%s", text)
+    text = "{} запустилась {}".format(name_user, var.stend)
+    logging.warning( u"%s", text)
+    bot.send_message(message.chat.id, "Запустилась синхронизация, в среднем выполняется 45 минут. Можно продолжать работу.")
 
 @bot.message_handler(commands=['gistek_build_arm'])
 def stend_select(message):
@@ -129,12 +153,10 @@ def arm_job_jenkins(message):
             params = {"stend": var.stend}
         if var.issue_select == "Yes":
             params = {"stend": var.stend, "issue_id": var.issue_id}
-        # print(name_user + "cтучится в jenkins чтобы собрать " + str(var.arm) + " для " + var.stend)
         text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
-        # print(name_user + "собирает " + str(var.arm) + " на " + var.stend)
         text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -254,9 +276,11 @@ def pentaho_job_jenkins(message):
                 params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "cas_tek_version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id,}
-        print(name_user + "cтучится в jenkins чтобы выполнить " + str(var.arm) + " для ПОИБ")
+        text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
+        logging.warning( u"%s", text)
         jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
-        print(name_user + "на ПОИБ выполняется " + str(var.arm) + " версия " + str(var.tag))
+        text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
+        logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 7 минут и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
         bot.reply_to(message, 'oooops6')
@@ -267,12 +291,10 @@ def pentaho_build_job_jenkins(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        # print(name_user + "cтучится в jenkins чтобы собрать для пентахи " + str(var.arm))
         text = "{} cтучится в jenkins чтобы собрать для пентахи  {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
-        # print(name_user + "собирает " + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -378,7 +400,6 @@ def portal_job_jenkins(message):
         issue_id = message.text
         var = user_dict[chat_id]
         var.issue_id = issue_id
-        # print(name_user + "cтучится в jenkins чтобы обновить " + str(var.arm) + " на портале " + str(var.stend) + " в " + str(var.open_close))
         text = "{} cтучится в jenkins чтобы обновить {} на портале {} в {}".format(name_user, var.arm, var.stend, var.open_close)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
@@ -441,7 +462,6 @@ def portal_job_jenkins(message):
             if var.arm == "plugin_slider":
                 params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_slider": str(var.tag)}
         jenkins.build_job('GISTEK_Portal/Update_App', params)
-        # print(name_user + "на портале " + str(var.stend) + " обновляется " + str(var.arm))
         text = "{} на портале {} обновляет {}".format(name_user, var.stend, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + " на портале " + str(var.stend) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -454,12 +474,10 @@ def portal_build_job_jenkins(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        # print(name_user + "cтучится в jenkins чтобы собрать портлет " + str(var.arm))
         text = "{} cтучится в jenkins чтобы собрать портлет  {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Portal/' + str(var.arm))
-        # print(name_user + "собирает " + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -496,12 +514,10 @@ def mobile_job_jenkins(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        # print(name_user + "cтучится в jenkins чтобы собрать приложение " + str(var.arm))
         text = "{} cтучится в jenkins чтобы собрать приложение {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
-        # print(name_user + "собирает " + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -538,12 +554,10 @@ def integration_job_jenkins(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        # print(name_user + "cтучится в jenkins чтобы собрать приложение " + str(var.arm) + " для интеграционной подситсемы")
         text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Integration/' + str(var.arm))
-        # print(name_user + "собирает для интеграционной подсистемы " + str(var.arm))
         text = "{} собирает для интеграционной подсистемы {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -600,21 +614,17 @@ def pizi_job_jenkins(message):
         var.arm = arm
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.build_deloy == "Build":
-            # print(name_user + "cтучится в jenkins чтобы собрать приложение " + str(var.arm) + " для Сбора")
             text = "{} cтучится в jenkins чтобы собрать приложение {} для Сбора".format(name_user, var.arm)
             logging.warning( u"%s", text)
             jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
-            # print(name_user + "собирает для сбора " + str(var.arm))
             text = "{} собирает для сбора {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + " для сбора соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
         if var.build_deloy == "Deploy":
             params = {"stend": var.stend}
-            # print(name_user + "cтучится в jenkins чтобы собрать обновить " + str(var.arm) + " для Сбора")
             text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора".format(name_user, var.arm)
             logging.warning( u"%s", text)
             jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
-            # print(name_user + "обновляет на Сборе " + str(var.arm))
             text = "{} обновляет на Сборе {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -639,11 +649,9 @@ def poib_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-            # print(name_user + "cтучится в jenkins чтобы собрать приложение для ПОИБ")
             text = "{} cтучится в jenkins чтобы собрать приложение для ПОИБ".format(name_user)
             logging.warning( u"%s", text)
             jenkins.build_job('GISTEK_Poib/Build')
-            # print(name_user + "собирает ПОИБ")
             text = "{} собирает ПОИБ".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 5 минуточек и ПОИБ соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
@@ -686,16 +694,14 @@ def poib_job_jenkins(message):
         var = user_dict[chat_id]
         var.tag = tag
         params = {"stend": var.stend, "version": str(var.tag)}
-        # print(name_user + "cтучится в jenkins чтобы выполнить " + str(var.arm) + " для ПОИБ")
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
-        # print(name_user + "на ПОИБ выполняется " + str(var.arm) + " версия " + str(var.tag))
         text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
         bot.reply_to(message, 'oooops4')
 
-bot.polling()
+bot.polling(none_stop=True)
