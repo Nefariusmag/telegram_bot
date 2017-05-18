@@ -15,7 +15,6 @@ test.py
 
 Необходимые библиотеки:
 pip3 install pytelegrambotapi
-pip3 install cherrypy
 pip3 install jenkinsapi
 
 Добавить в крон:

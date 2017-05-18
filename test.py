@@ -54,6 +54,7 @@ def handle_true_help(message):
 Подсистема мобильного приложения: /gistek_mobile \n
 Подсистема ПИЗИ: /gistek_pizi \n
 Подсистема ПОИБ: /gistek_poib \n
+Перезапуск подсистем /restart_system \n
 
 Синхронизация данных между стендами: /sync""")
 
@@ -701,6 +702,46 @@ def poib_job_jenkins(message):
         text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+    except Exception as e:
+        bot.reply_to(message, 'oooops4')
+
+@bot.message_handler(commands=['restart_system'])
+def action_select(message):
+    global name_user
+    name_user = "{}({}):".format(message.chat.username, message.chat.id)
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.add('REA_TEST', 'PK', 'PI')
+    msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+    bot.register_next_step_handler(msg, system_select)
+
+def system_select(message):
+    try:
+        chat_id = message.chat.id
+        stend = message.text
+        var = Var(stend)
+        user_dict[chat_id] = var
+        var.stend = stend
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
+        msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
+        bot.register_next_step_handler(msg, system_job_jenkins)
+    except Exception as e:
+        bot.reply_to(message, 'oooops2')
+
+def system_job_jenkins(message):
+    try:
+        chat_id = message.chat.id
+        arm = message.text
+        var = user_dict[chat_id]
+        var.arm = arm
+        params = {"stend": var.stend, "system": var.arm}
+        text = "{} cтучится в jenkins чтобы перезагрузить {} на {}".format(name_user, var.arm, var.stend)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+        jenkins.build_job('GISTEK_Restart', params)
+        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.tag)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
         bot.reply_to(message, 'oooops4')
 
