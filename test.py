@@ -111,7 +111,7 @@ def arm_select(message):
         var = Var(stend)
         user_dict[chat_id] = var
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("admin_kl", "admin_net", "all_mak_inf", "arm_access", "fpi-autoregistration", "gis_des", "is_transport", "kontrol", "load_ssb", "offline", "template_cleaner", "wmk_gistek")
+        markup.add("admin_kl", "admin_net", "all_mak_inf", "arm_access", "fpi-autoregistration", "gis_des", "is_transport", "kontrol", "load_ssb", "offline", "template_cleaner", "wmk_gistek", "arm_remover")
         msg = bot.reply_to(message, "Выберите АРМ", reply_markup=markup)
         bot.register_next_step_handler(msg, arm_issue_select)
     except Exception as e:
@@ -623,7 +623,7 @@ def pizi_job_jenkins(message):
             bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + " для сбора соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
         if var.build_deloy == "Deploy":
             params = {"stend": var.stend}
-            text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора".format(name_user, var.arm)
+            text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора на {}".format(name_user, var.arm, var.stend)
             logging.warning( u"%s", text)
             jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
             text = "{} обновляет на Сборе {}".format(name_user, var.arm)
