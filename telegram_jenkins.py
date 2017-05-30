@@ -622,7 +622,7 @@ def pizi_job_jenkins(message):
             bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + " для сбора соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
         if var.build_deloy == "Deploy":
             params = {"stend": var.stend}
-            text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора".format(name_user, var.arm)
+            text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора на {}".format(name_user, var.arm, var.stend)
             logging.warning( u"%s", text)
             jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
             text = "{} обновляет на Сборе {}".format(name_user, var.arm)
