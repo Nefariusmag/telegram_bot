@@ -24,9 +24,14 @@ import config
 import telebot
 from telebot import types
 
-jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
-jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
-bot = telebot.TeleBot(config.token)
+try:
+    jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+    jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+    bot = telebot.TeleBot(config.token)
+except Exception as e:
+    jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+    jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+    bot = telebot.TeleBot(config.token)
 
 logging.warning(u'В jenkins авторизовались')
 
