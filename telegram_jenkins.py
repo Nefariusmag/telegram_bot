@@ -36,27 +36,31 @@ while i != 1:
 
 logging.warning(u'В jenkins авторизовались')
 
+def secure(message):
+    if message.chat.id in config.true_id:
+        text = "Пользователь {} прошел проверку безопасности".format(message.chat.id)
+        logging.warning( u"%s", text)
+    else:
+        text = "Пользователь {} не прошел проверку безопасности".format(message.chat.id)
+        logging.warning( u"%s", text)
+        # bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
+        msg = bot.reply_to(message, "Соррян, у вас нету нужных прав.")
+        bot.register_next_step_handler(msg, secure_block)
+
+
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     bot.send_message(message.chat.id, "Привет, друг. Тут нет ничего интересного - уходи.")
 
-@bot.message_handler(commands=['help'])
-def handle_help(message):
-    text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "Вот такой вот стремный /help.")
-
 @bot.message_handler(commands=['helppp'])
 def handle_true_help(message):
     text = "{}({}): решил почитать настоящий /help ;-)".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     id_user = message.chat.id
-    if id_user in config.true_id:
-        text = "Пользователь {} прошел проверку безопасности".format(id_user)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, """Что я умею!
+    secure(message)
+    bot.send_message(message.chat.id, """Что я умею!
 
 Сборка АРМ: /gistek_build_arm \n
 Подсистема Пентахо: /gistek_pentaho \n
@@ -69,9 +73,14 @@ def handle_true_help(message):
 
 Синхронизация данных между стендами: /sync""")
 
-    else:
-        text = "Пользователь {} не прошел проверку безопасности".format(id_user)
-        logging.warning( u"%s", text)
+def secure_block(message):
+    logging.warning(u'Нет достаточных прав.')
+
+@bot.message_handler(commands=['help'])
+def handle_help(message):
+    text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
+    logging.warning( u"%s", text)
+    bot.send_message(message.chat.id, "Вот такой вот стремный /help.")
 
 user_dict = {}
 
