@@ -37,16 +37,16 @@ while i != 1:
 logging.warning(u'В jenkins авторизовались')
 
 def secure(message):
+    global user_true
     if message.chat.id in config.true_id:
         text = "Пользователь {} прошел проверку безопасности".format(message.chat.id)
         logging.warning( u"%s", text)
+        user_true = "true"
     else:
         text = "Пользователь {} не прошел проверку безопасности".format(message.chat.id)
         logging.warning( u"%s", text)
-        # bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
-        msg = bot.reply_to(message, "Соррян, у вас нету нужных прав.")
-        bot.register_next_step_handler(msg, secure_block)
-
+        bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
+        user_true = "false"
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -60,7 +60,8 @@ def handle_true_help(message):
     logging.warning( u"%s", text)
     id_user = message.chat.id
     secure(message)
-    bot.send_message(message.chat.id, """Что я умею!
+    if user_true == "true":
+        bot.send_message(message.chat.id, """Что я умею!
 
 Сборка АРМ: /gistek_build_arm \n
 Подсистема Пентахо: /gistek_pentaho \n
@@ -72,9 +73,6 @@ def handle_true_help(message):
 Перезапуск подсистем /restart_system \n
 
 Синхронизация данных между стендами: /sync""")
-
-def secure_block(message):
-    logging.warning(u'Нет достаточных прав.')
 
 @bot.message_handler(commands=['help'])
 def handle_help(message):
@@ -96,12 +94,14 @@ class Var:
 
 @bot.message_handler(commands=['sync'])
 def sync_start(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp')
-    msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
-    bot.register_next_step_handler(msg, sync_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp')
+        msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
+        bot.register_next_step_handler(msg, sync_select)
 
 def sync_select(message):
     try:
@@ -121,12 +121,14 @@ def sync_select(message):
 
 @bot.message_handler(commands=['gistek_build_arm'])
 def stend_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('REA_TEST', 'PK', 'PI')
-    msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
-    bot.register_next_step_handler(msg, arm_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('REA_TEST', 'PK', 'PI')
+        msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+        bot.register_next_step_handler(msg, arm_select)
 
 def arm_select(message):
     try:
@@ -191,12 +193,14 @@ def arm_job_jenkins(message):
 #####
 @bot.message_handler(commands=['gistek_pentaho'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, pentaho_app_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, pentaho_app_select)
 
 def pentaho_app_select(message):
     try:
@@ -331,12 +335,14 @@ def pentaho_build_job_jenkins(message):
 
 @bot.message_handler(commands=['gistek_portal'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, portal_app_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, portal_app_select)
 
 def portal_app_select(message):
     try:
@@ -601,12 +607,14 @@ def mobile_job_jenkins(message):
 
 @bot.message_handler(commands=['gistek_integration'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, integration_app_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, integration_app_select)
 
 def integration_app_select(message):
     try:
@@ -712,12 +720,14 @@ def integration_job_jenkins(message):
 
 @bot.message_handler(commands=['gistek_pizi'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, pizi_stend_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, pizi_stend_select)
 
 def pizi_stend_select(message):
     try:
@@ -779,12 +789,14 @@ def pizi_job_jenkins(message):
 
 @bot.message_handler(commands=['gistek_poib'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, poib_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, poib_select)
 
 def poib_select(message):
     try:
@@ -852,12 +864,14 @@ def poib_job_jenkins(message):
 
 @bot.message_handler(commands=['restart_system'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('REA_TEST', 'PK', 'PI')
-    msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
-    bot.register_next_step_handler(msg, system_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('REA_TEST', 'PK', 'PI')
+        msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+        bot.register_next_step_handler(msg, system_select)
 
 def system_select(message):
     try:
