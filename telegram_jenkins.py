@@ -845,7 +845,7 @@ def system_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Restart', params)
-        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.tag)
+        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
