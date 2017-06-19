@@ -24,11 +24,29 @@ import config
 import telebot
 from telebot import types
 
-jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
-jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
-bot = telebot.TeleBot(config.token)
+i = 0
+while i != 1:
+    try:
+        jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+        jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+        bot = telebot.TeleBot(config.token)
+        i = 1
+    except Exception as e:
+        logging.error(u"Авторизация не прошла, пробуем еще раз")
 
 logging.warning(u'В jenkins авторизовались')
+
+def secure(message):
+    global user_true
+    if message.chat.id in config.true_id:
+        text = "Пользователь {} прошел проверку безопасности".format(message.chat.id)
+        logging.warning( u"%s", text)
+        user_true = "true"
+    else:
+        text = "Пользователь {} не прошел проверку безопасности".format(message.chat.id)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
+        user_true = "false"
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -36,27 +54,31 @@ def handle_start(message):
     logging.warning( u"%s", text)
     bot.send_message(message.chat.id, "Привет, друг. Тут нет ничего интересного - уходи.")
 
-@bot.message_handler(commands=['help'])
-def handle_help(message):
-    text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "Вот такой вот стремный /help.")
-
 @bot.message_handler(commands=['helppp'])
 def handle_true_help(message):
     text = "{}({}): решил почитать настоящий /help ;-)".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, """Что я умею!
+    id_user = message.chat.id
+    secure(message)
+    if user_true == "true":
+        bot.send_message(message.chat.id, """Что я умею!
 
 Сборка АРМ: /gistek_build_arm \n
 Подсистема Пентахо: /gistek_pentaho \n
 Подсистема Портал: /gistek_portal  \n
 Подсистема мобильного приложения: /gistek_mobile \n
+Подсистема интеграционная: /gistek_integration \n
 Подсистема ПИЗИ: /gistek_pizi \n
 Подсистема ПОИБ: /gistek_poib \n
 Перезапуск подсистем /restart_system \n
 
 Синхронизация данных между стендами: /sync""")
+
+@bot.message_handler(commands=['help'])
+def handle_help(message):
+    text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
+    logging.warning( u"%s", text)
+    bot.send_message(message.chat.id, "Вот такой вот стремный /help.")
 
 user_dict = {}
 
@@ -72,12 +94,14 @@ class Var:
 
 @bot.message_handler(commands=['sync'])
 def sync_start(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp')
-    msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
-    bot.register_next_step_handler(msg, sync_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp')
+        msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
+        bot.register_next_step_handler(msg, sync_select)
 
 def sync_select(message):
     try:
@@ -97,12 +121,14 @@ def sync_select(message):
 
 @bot.message_handler(commands=['gistek_build_arm'])
 def stend_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('REA_TEST', 'PK', 'PI')
-    msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
-    bot.register_next_step_handler(msg, arm_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('REA_TEST', 'PK', 'PI')
+        msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+        bot.register_next_step_handler(msg, arm_select)
 
 def arm_select(message):
     try:
@@ -164,14 +190,17 @@ def arm_job_jenkins(message):
     except Exception as e:
         bot.reply_to(message, 'oooops4')
 
+#####
 @bot.message_handler(commands=['gistek_pentaho'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, pentaho_app_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, pentaho_app_select)
 
 def pentaho_app_select(message):
     try:
@@ -253,28 +282,28 @@ def pentaho_job_jenkins(message):
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
             if var.arm == "update_plugins":
-                params = {"stend": var.stend, "tags": str(var.arm), "plugins_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_fileProperties":
-                params = {"stend": var.stend, "tags": str(var.arm), "fileProperties_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_quixote_theme":
-                params = {"stend": var.stend, "tags": str(var.arm), "quixote_theme_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_langpack":
-                params = {"stend": var.stend, "tags": str(var.arm), "LanguagePacks_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_cas_tek":
-                params = {"stend": var.stend, "tags": str(var.arm), "cas_tek_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stend": var.stend, "tags": str(var.arm)}
         if var.issue_select == "Yes":
             if var.arm == "update_plugins":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "plugins_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_fileProperties":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "fileProperties_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_quixote_theme":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "quixote_theme_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_langpack":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "LanguagePacks_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_cas_tek":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "cas_tek_version": str(var.tag)}
+                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id,}
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
@@ -302,14 +331,18 @@ def pentaho_build_job_jenkins(message):
     except Exception as e:
         bot.reply_to(message, 'oooops7')
 
+#####
+
 @bot.message_handler(commands=['gistek_portal'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, portal_app_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, portal_app_select)
 
 def portal_app_select(message):
     try:
@@ -406,62 +439,62 @@ def portal_job_jenkins(message):
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
             if var.arm == "plugin_npa":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_npa": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_inspinia-theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_inspinia_theme": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_reports-display-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_reports_display_portlet": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_login-hook":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_login_hook": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_notification-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_notification_portlet": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_languagePack":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_languagePack": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_suppport-mail":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_support_mail": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_iframe":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_iframe": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_subsystem-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_subsystem_search": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_urc_theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_urc_theme": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_hook-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_hook_search": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_asset-publisher":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_hook_asset_publisher": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_mainpageGeo":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_mainpageGeo": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.arm == "plugin_slider":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version_slider": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
         if var.issue_select == "Yes":
             if var.arm == "plugin_npa":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_npa": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_inspinia-theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_inspinia_theme": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_reports-display-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_reports_display_portlet": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_login-hook":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_login_hook": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_notification-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_notification_portlet": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_languagePack":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_languagePack": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_suppport-mail":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_support_mail": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_iframe":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_iframe": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_subsystem-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_subsystem_search": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_urc_theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_urc_theme": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_hook-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_hook_search": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_asset-publisher":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_hook_asset_publisher": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_mainpageGeo":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_mainpageGeo": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "plugin_slider":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version_slider": str(var.tag)}
+                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
         jenkins.build_job('GISTEK_Portal/Update_App', params)
         text = "{} на портале {} обновляет {}".format(name_user, var.stend, var.arm)
         logging.warning( u"%s", text)
@@ -490,11 +523,11 @@ def action_select(message):
     global name_user
     name_user = "{}({}):".format(message.chat.username, message.chat.id)
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy (пока нет необходимости)')
+    markup.add('Build', 'Deploy')
     msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, mobile_app_select)
+    bot.register_next_step_handler(msg, mobile_action_select)
 
-def mobile_app_select(message):
+def mobile_action_select(message):
     try:
         chat_id = message.chat.id
         build_deloy = message.text
@@ -505,11 +538,16 @@ def mobile_app_select(message):
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("Android", "tek-portlet", "web-service-java")
             msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
-            bot.register_next_step_handler(msg, mobile_job_jenkins)
+            bot.register_next_step_handler(msg, mobile_job_build_jenkins)
+        if var.build_deloy == "Deploy":
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add('REA_TEST', 'PI')
+            msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+            bot.register_next_step_handler(msg, mobile_app_select)
     except Exception as e:
         bot.reply_to(message, 'oooops1')
 
-def mobile_job_jenkins(message):
+def mobile_job_build_jenkins(message):
     try:
         chat_id = message.chat.id
         arm = message.text
@@ -525,14 +563,58 @@ def mobile_job_jenkins(message):
     except Exception as e:
         bot.reply_to(message, 'oooops2')
 
+
+def mobile_app_select(message):
+    try:
+        chat_id = message.chat.id
+        stend = message.text
+        var = user_dict[chat_id]
+        var.stend = stend
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add("update_web_service", "update_portlet")
+        msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
+        bot.register_next_step_handler(msg, mobile_tag_select)
+    except Exception as e:
+        bot.reply_to(message, 'oooops2')
+
+def mobile_tag_select(message):
+    try:
+        chat_id = message.chat.id
+        arm = message.text
+        var = user_dict[chat_id]
+        var.arm = arm
+        msg = bot.reply_to(message, "Введите номер версии (тег):")
+        bot.register_next_step_handler(msg, mobile_job_jenkins)
+    except Exception as e:
+        bot.reply_to(message, 'oooops3')
+
+def mobile_job_jenkins(message):
+    try:
+        chat_id = message.chat.id
+        tag = message.text
+        var = user_dict[chat_id]
+        var.tag = tag
+        params = {"stand": var.stend, "tags": str(var.arm), "version": str(var.tag)}
+        text = "{} cтучится в jenkins чтобы обновить {} для мобильного приложения".format(name_user, var.arm)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+        jenkins.build_job('GISTEK_MobileApp/Update', params)
+        text = "{} для мобильного приложения выполняется {} тег {}".format(name_user, var.arm, var.tag)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+    except Exception as e:
+        bot.reply_to(message, 'oooops4')
+
 @bot.message_handler(commands=['gistek_integration'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy (not work yet)')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, integration_app_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, integration_app_select)
 
 def integration_app_select(message):
     try:
@@ -543,36 +625,109 @@ def integration_app_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add("Build")
-            msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
-            bot.register_next_step_handler(msg, integration_job_jenkins)
+            markup.add('REA_TEST', 'PI')
+            msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_build_stand_select)
+        if var.build_deloy == "Deploy":
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add('REA_TEST', 'PI')
+            msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_stand_select)
     except Exception as e:
         bot.reply_to(message, 'oooops1')
 
-def integration_job_jenkins(message):
+def integration_stand_select(message):
+    try:
+        chat_id = message.chat.id
+        stend = message.text
+        var = user_dict[chat_id]
+        var.stend = stend
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add("update", "update_generator")
+        msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
+        bot.register_next_step_handler(msg, integration_tag_select)
+    except Exception as e:
+        bot.reply_to(message, 'oooops2')
+
+def integration_build_stand_select(message):
+    try:
+        chat_id = message.chat.id
+        stend = message.text
+        var = user_dict[chat_id]
+        var.stend = stend
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add("Build_mis", "Build_generator", "Build_LogUI")
+        msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
+        bot.register_next_step_handler(msg, integration_build_tag_select)
+    except Exception as e:
+        bot.reply_to(message, 'oooops2')
+
+def integration_tag_select(message):
     try:
         chat_id = message.chat.id
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
+        msg = bot.reply_to(message, "Введите номер версии (тег):")
+        bot.register_next_step_handler(msg, integration_job_jenkins)
+    except Exception as e:
+        bot.reply_to(message, 'oooops3')
+
+def integration_build_tag_select(message):
+    try:
+        chat_id = message.chat.id
+        arm = message.text
+        var = user_dict[chat_id]
+        var.arm = arm
+        msg = bot.reply_to(message, "Введите номер версии (тег):")
+        bot.register_next_step_handler(msg, integration_build_job_jenkins)
+    except Exception as e:
+        bot.reply_to(message, 'oooops3')
+
+def integration_build_job_jenkins(message):
+    try:
+        chat_id = message.chat.id
+        tag = message.text
+        var = user_dict[chat_id]
+        var.tag = tag
+        params = {"stand": var.stend, "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Integration/' + str(var.arm))
+        jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
         text = "{} собирает для интеграционной подсистемы {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        bot.reply_to(message, 'oooops3')
+
+def integration_job_jenkins(message):
+    try:
+        chat_id = message.chat.id
+        tag = message.text
+        var = user_dict[chat_id]
+        var.tag = tag
+        params = {"stand": var.stend, "tags": str(var.arm), "version": str(var.tag)}
+        text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы".format(name_user, var.arm)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+        jenkins.build_job('GISTEK_Integration/Update', params)
+        text = "{} обновляет на интеграционной подсистеме {}".format(name_user, var.arm)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет), а пока можно продолжать..")
+    except Exception as e:
+        bot.reply_to(message, 'oooops4')
 
 @bot.message_handler(commands=['gistek_pizi'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, pizi_stend_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, pizi_stend_select)
 
 def pizi_stend_select(message):
     try:
@@ -628,18 +783,20 @@ def pizi_job_jenkins(message):
             jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
             text = "{} обновляет на Сборе {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет), а пока можно продолжать..")
+            bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
         bot.reply_to(message, 'oooops3')
 
 @bot.message_handler(commands=['gistek_poib'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, poib_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('Build', 'Deploy')
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, poib_select)
 
 def poib_select(message):
     try:
@@ -658,7 +815,7 @@ def poib_select(message):
             bot.send_message(message.chat.id, "..еще 5 минуточек и ПОИБ соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
         if var.build_deloy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PK', 'PI')
+            markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, poib_app_select)
     except Exception as e:
@@ -707,12 +864,14 @@ def poib_job_jenkins(message):
 
 @bot.message_handler(commands=['restart_system'])
 def action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('REA_TEST', 'PK', 'PI')
-    msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
-    bot.register_next_step_handler(msg, system_select)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('REA_TEST', 'PK', 'PI')
+        msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+        bot.register_next_step_handler(msg, system_select)
 
 def system_select(message):
     try:
@@ -734,7 +893,7 @@ def system_job_jenkins(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        params = {"stend": var.stend, "system": var.arm}
+        params = {"stand": var.stend, "system": var.arm}
         text = "{} cтучится в jenkins чтобы перезагрузить {} на {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
