@@ -212,7 +212,7 @@ def pentaho_app_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add("FileProperties", "integr_clearcache", "integr_readmetadata", "languagePack", "pentaho-cas-tek", "Plugin", "quixote-theme")
+            markup.add("fileProperties", "integr_clearcache", "integr_readmetadata", "langpack", "cas_tek", "plugins", "quixote_theme")
             msg = bot.reply_to(message, "Выберите плагин для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_build_job_jenkins)
         if var.build_deloy == "Deploy":
@@ -483,7 +483,7 @@ def mobile_action_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add("Android", "tek-portlet", "web-service-java")
+            markup.add("Android", "portlet", "web_service")
             msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_job_build_jenkins)
         if var.build_deloy == "Deploy":
