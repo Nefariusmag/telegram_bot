@@ -190,7 +190,8 @@ def arm_job_jenkins(message):
     except Exception as e:
         bot.reply_to(message, 'oooops4')
 
-#####
+##### start
+
 @bot.message_handler(commands=['gistek_pentaho'])
 def action_select(message):
     secure(message)
@@ -211,7 +212,7 @@ def pentaho_app_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add("FileProperties", "integr_clearcache", "integr_readmetadata", "languagePack", "pentaho-cas-tek", "Plugin", "quixote-theme")
+            markup.add("fileProperties", "integr_clearcache", "integr_readmetadata", "langpack", "cas_tek", "plugins", "quixote_theme")
             msg = bot.reply_to(message, "Выберите плагин для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_build_job_jenkins)
         if var.build_deloy == "Deploy":
@@ -331,7 +332,7 @@ def pentaho_build_job_jenkins(message):
     except Exception as e:
         bot.reply_to(message, 'oooops7')
 
-#####
+##### finish
 
 @bot.message_handler(commands=['gistek_portal'])
 def action_select(message):
@@ -353,7 +354,7 @@ def portal_app_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add("languagePackRU", "support-mail-portlet", "hook-search", "subsystem-search", "hook-asset-publisher", "urc-theme", "mainpageGEO", "slider", "npa-loader", "inspinia-theme", "login-hook", "reports-display-portlet")
+            markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme")
             msg = bot.reply_to(message, "Выберите портлет для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_build_job_jenkins)
         if var.build_deloy == "Deploy":
@@ -384,7 +385,7 @@ def portal_app_2_select(message):
         var = user_dict[chat_id]
         var.open_close = open_close
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("plugin_inspinia-theme", "plugin_reports-display-portlet", "plugin_login-hook", "plugin_notification-portlet", "plugin_languagePack", "plugin_suppport-mail", "plugin_iframe", "plugin_subsystem-search", "plugin_urc_theme", "plugin_hook-search", "plugin_asset-publisher", "plugin_mainpageGeo", "plugin_slider", "plugin_npa")
+        markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme")
         msg = bot.reply_to(message, "Выберите какой портлет будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_tag_select)
     except Exception as e:
@@ -438,63 +439,9 @@ def portal_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
-            if var.arm == "plugin_npa":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_inspinia-theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_reports-display-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_login-hook":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_notification-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_languagePack":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_suppport-mail":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_iframe":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_subsystem-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_urc_theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_hook-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_asset-publisher":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_mainpageGeo":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-            if var.arm == "plugin_slider":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
         if var.issue_select == "Yes":
-            if var.arm == "plugin_npa":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_inspinia-theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_reports-display-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_login-hook":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_notification-portlet":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_languagePack":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_suppport-mail":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_iframe":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_subsystem-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_urc_theme":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_hook-search":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_asset-publisher":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_mainpageGeo":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "plugin_slider":
-                params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
+            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
         jenkins.build_job('GISTEK_Portal/Update_App', params)
         text = "{} на портале {} обновляет {}".format(name_user, var.stend, var.arm)
         logging.warning( u"%s", text)
@@ -514,7 +461,7 @@ def portal_build_job_jenkins(message):
         jenkins.build_job('GISTEK_Portal/' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 1 минута (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
         bot.reply_to(message, 'oooops8')
 
@@ -536,7 +483,7 @@ def mobile_action_select(message):
         var.build_deloy = build_deloy
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add("Android", "tek-portlet", "web-service-java")
+            markup.add("Android", "portlet", "web_service")
             msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_job_build_jenkins)
         if var.build_deloy == "Deploy":
@@ -898,7 +845,7 @@ def system_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Restart', params)
-        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.tag)
+        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
