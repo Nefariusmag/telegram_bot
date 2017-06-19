@@ -18,9 +18,16 @@ pip3 install pytelegrambotapi
 pip3 install jenkinsapi
 
 Добавить в крон:
-*/15 * * * * cd ~/telegram_bot && ./telegram_jenkins.py
+*/15 * * * * cd ~/telegram_bot && ./start.sh start &
 
 --History:
+
+---2.9
+
+Добавил:
+Проверку по id пользователя для важных вещей
+Исправил для ряда подсистем переменные, т.к. изменились переменные в дженкинсе
+Изменил стартовый скрипт на start.sh start
 
 ---2.8
 
