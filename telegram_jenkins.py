@@ -54,14 +54,12 @@ def handle_start(message):
     logging.warning( u"%s", text)
     bot.send_message(message.chat.id, "Привет, друг. Тут нет ничего интересного - уходи.")
 
-@bot.message_handler(commands=['helppp'])
+@bot.message_handler(commands=['help'])
 def handle_true_help(message):
-    text = "{}({}): решил почитать настоящий /help ;-)".format(message.chat.username, message.chat.id)
+    text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     id_user = message.chat.id
-    secure(message)
-    if user_true == "true":
-        bot.send_message(message.chat.id, """Что я умею!
+    bot.send_message(message.chat.id, """Что я умею!
 
 Сборка АРМ: /gistek_build_arm \n
 Подсистема Пентахо: /gistek_pentaho \n
@@ -73,12 +71,6 @@ def handle_true_help(message):
 Перезапуск подсистем /restart_system \n
 
 Синхронизация данных между стендами: /sync""")
-
-@bot.message_handler(commands=['help'])
-def handle_help(message):
-    text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "Вот такой вот стремный /help.")
 
 user_dict = {}
 
@@ -788,16 +780,43 @@ def poib_tag_select(message):
         var = user_dict[chat_id]
         var.arm = arm
         msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, poib_job_jenkins)
+        bot.register_next_step_handler(msg, poib_issue_select)
     except Exception as e:
         bot.reply_to(message, 'oooops3')
 
-def poib_job_jenkins(message):
+def poib_issue_select(message):
     try:
         chat_id = message.chat.id
         tag = message.text
         var = user_dict[chat_id]
         var.tag = tag
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add("Yes", "No")
+        msg = bot.reply_to(message, "Есть задача?", reply_markup=markup)
+        bot.register_next_step_handler(msg, poib_issue)
+    except Exception as e:
+        bot.reply_to(message, 'oooops4')
+
+def poib_issue(message):
+    try:
+        chat_id = message.chat.id
+        issue_select = message.text
+        var = user_dict[chat_id]
+        var.issue_select = issue_select
+        if var.issue_select == "No":
+            msg = bot.reply_to(message, "Введите 0:")
+        if var.issue_select == "Yes":
+            msg = bot.reply_to(message, "Введите номер:")
+        bot.register_next_step_handler(msg, poib_job_jenkins)
+    except Exception as e:
+        bot.reply_to(message, 'oooops5')
+
+def poib_job_jenkins(message):
+    try:
+        chat_id = message.chat.id
+        issue_id = message.text
+        var = user_dict[chat_id]
+        var.issue_id = issue_id
         params = {"stend": var.stend, "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
         logging.warning( u"%s", text)
