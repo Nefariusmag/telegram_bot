@@ -48,6 +48,18 @@ def secure(message):
         bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
         user_true = "false"
 
+def secure_dev(message):
+    global user_true
+    if message.chat.id in config.true_id_dev:
+        text = "Пользователь {} прошел проверку безопасности".format(message.chat.id)
+        logging.warning( u"%s", text)
+        user_true = "true"
+    else:
+        text = "Пользователь {} не прошел проверку безопасности".format(message.chat.id)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
+        user_true = "false"
+
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
@@ -86,7 +98,7 @@ class Var:
 
 @bot.message_handler(commands=['sync'])
 def sync_start(message):
-    secure(message)
+    secure_dev(message)
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
