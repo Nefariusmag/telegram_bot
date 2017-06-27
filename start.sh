@@ -19,6 +19,9 @@ elif [ "$status" == "start" ]; then
     rm -f file.lock
     exit 0
 
+elif [ "$status" == "stop" ]; then
+    	kill -9 $(ps aux | grep -v grep | grep telegram_jenkins.py | awk '{print($2)}')
+
 elif [ "$status" == "what" ]; then
     echo "Запусти с параметром: install \ start"
 fi
