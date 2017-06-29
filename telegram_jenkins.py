@@ -882,4 +882,65 @@ def system_job_jenkins(message):
     except Exception as e:
         bot.reply_to(message, 'oooops4')
 
+@bot.message_handler(commands=['dev_klochkov'])
+
+def action_select(message):
+    secure_dev(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        markup.add('restart', 'deploy')
+        msg = bot.reply_to(message, "Что делаем?", reply_markup=markup)
+        bot.register_next_step_handler(msg, dev_select)
+
+def dev_select(message):
+    try:
+        chat_id = message.chat.id
+        build_deloy = message.text
+        var = Var(build_deloy)
+        user_dict[chat_id] = var
+        var.build_deloy = build_deloy
+        if var.build_deloy == "restart":
+            params = {"stand": "DEV", "system": "pentaho"}
+            text = "{} cтучится в jenkins чтобы перезагрузить pentaho на DEV".format(name_user)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+            jenkins.build_job('GISTEK_Restart', params)
+            text = "{} перезагружается pentaho на DEV".format(name_user)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
+        if var.build_deloy == "deploy":
+            msg = bot.reply_to(message, "Введите номер версии (тег):")
+            bot.register_next_step_handler(msg, dev_job)
+    except Exception as e:
+        bot.reply_to(message, 'Обратись к Смолину чтобы в дженкинс выполнил ребут или сделай сам в ручную')
+
+def dev_job(message):
+    try:
+        chat_id = message.chat.id
+        tag = message.text
+        var = user_dict[chat_id]
+        var.tag = tag
+        text = "{} cтучится в jenkins чтобы собрать для пентахи fileProperties".format(name_user)
+        logging.warning( u"%s", text)
+        params = {"version": var.tag}
+        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+        jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
+        text = "{} собирает fileProperties".format(name_user)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще 3 минуты и плагин fileProperties соберется (если ошибки в jenkins не будет)")
+        import time
+        time.sleep(180)
+        params = {"stand": "DEV", "tags": "update_fileProperties", "version": str(var.tag)}
+        text = "{} cтучится в jenkins чтобы обновить fileProperties версии {} для пентахи на DEV".format(name_user, var.tag)
+        logging.warning( u"%s", text)
+        jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        text = "{} на Пентахах DEV обновляется fileProperties версия {}".format(name_user, var.tag)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+        time.sleep(120)
+    except Exception as e:
+        bot.reply_to(message, 'Обратись к Смолину чтобы в дженкинс выполнил джобу или сделай сам в ручную')
+
 bot.polling(none_stop=True)
