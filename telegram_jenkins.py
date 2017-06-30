@@ -60,6 +60,14 @@ def secure_dev(message):
         bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
         user_true = "false"
 
+def errors(message):
+    text = "params: {}, build_deloy: {}, stend: {}, arm: {}, issue_select: {}, issue_id: {}, tag: {}, open_close: {}".format(params, build_deloy, stend, arm, issue_select, issue_id, tag, open_close)
+    logging.warning( u"%s", text)
+    jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+    jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+    bot = telebot.TeleBot(config.token)
+    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал. Но если такое второй раз, то обратись к Смолину чтобы он сделал или сам ручками. Заодно пусть он посмотрит логи и рестартует бота.')
+
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
@@ -145,7 +153,7 @@ def arm_select(message):
         msg = bot.reply_to(message, "Выберите АРМ", reply_markup=markup)
         bot.register_next_step_handler(msg, arm_issue_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def arm_issue_select(message):
     try:
@@ -158,7 +166,7 @@ def arm_issue_select(message):
         msg = bot.reply_to(message, "Есть задача?", reply_markup=markup)
         bot.register_next_step_handler(msg, arm_issue)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def arm_issue(message):
     try:
@@ -172,7 +180,7 @@ def arm_issue(message):
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, arm_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def arm_job_jenkins(message):
     try:
@@ -192,7 +200,7 @@ def arm_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 ##### start
 
@@ -225,7 +233,7 @@ def pentaho_app_select(message):
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_app_2_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def pentaho_app_2_select(message):
     try:
@@ -238,7 +246,7 @@ def pentaho_app_2_select(message):
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, pentaho_tag_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def pentaho_tag_select(message):
     try:
@@ -249,7 +257,7 @@ def pentaho_tag_select(message):
         msg = bot.reply_to(message, "Введите номер версии (тег):")
         bot.register_next_step_handler(msg, pentaho_issue_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def pentaho_issue_select(message):
     try:
@@ -262,7 +270,7 @@ def pentaho_issue_select(message):
         msg = bot.reply_to(message, "Есть задача?", reply_markup=markup)
         bot.register_next_step_handler(msg, pentaho_issue)
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 def pentaho_issue(message):
     try:
@@ -276,7 +284,7 @@ def pentaho_issue(message):
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, pentaho_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops5')
+        errors(message)
 
 def pentaho_job_jenkins(message):
     try:
@@ -318,7 +326,7 @@ def pentaho_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 7 минут и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops6')
+        errors(message)
 
 def pentaho_build_job_jenkins(message):
     try:
@@ -334,7 +342,7 @@ def pentaho_build_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops7')
+        errors(message)
 
 ##### finish
 
@@ -367,7 +375,7 @@ def portal_app_select(message):
             msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_public_internal_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def portal_public_internal_select(message):
     try:
@@ -380,7 +388,7 @@ def portal_public_internal_select(message):
         msg = bot.reply_to(message, "Открытая или закрытая часть портала?", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_app_2_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def portal_app_2_select(message):
     try:
@@ -393,7 +401,7 @@ def portal_app_2_select(message):
         msg = bot.reply_to(message, "Выберите какой портлет будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_tag_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def portal_tag_select(message):
     try:
@@ -404,7 +412,7 @@ def portal_tag_select(message):
         msg = bot.reply_to(message, "Введите номер версии (тег):")
         bot.register_next_step_handler(msg, portal_issue_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 def portal_issue_select(message):
     try:
@@ -417,7 +425,7 @@ def portal_issue_select(message):
         msg = bot.reply_to(message, "Есть задача?", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_issue)
     except Exception as e:
-        bot.reply_to(message, 'oooops5')
+        errors(message)
 
 def portal_issue(message):
     try:
@@ -431,7 +439,7 @@ def portal_issue(message):
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, portal_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops6')
+        errors(message)
 
 def portal_job_jenkins(message):
     try:
@@ -451,7 +459,7 @@ def portal_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + " на портале " + str(var.stend) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops7')
+        errors(message)
 
 def portal_build_job_jenkins(message):
     try:
@@ -467,7 +475,7 @@ def portal_build_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 1 минута (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops8')
+        errors(message)
 
 @bot.message_handler(commands=['gistek_mobile'])
 def action_select(message):
@@ -496,7 +504,7 @@ def mobile_action_select(message):
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_app_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def mobile_job_build_jenkins(message):
     try:
@@ -512,7 +520,7 @@ def mobile_job_build_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 
 def mobile_app_select(message):
@@ -526,7 +534,7 @@ def mobile_app_select(message):
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, mobile_tag_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def mobile_tag_select(message):
     try:
@@ -537,7 +545,7 @@ def mobile_tag_select(message):
         msg = bot.reply_to(message, "Введите номер версии (тег):")
         bot.register_next_step_handler(msg, mobile_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def mobile_job_jenkins(message):
     try:
@@ -554,7 +562,7 @@ def mobile_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 @bot.message_handler(commands=['gistek_integration'])
 def action_select(message):
@@ -585,7 +593,7 @@ def integration_app_select(message):
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_stand_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def integration_stand_select(message):
     try:
@@ -598,7 +606,7 @@ def integration_stand_select(message):
         msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
         bot.register_next_step_handler(msg, integration_tag_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def integration_build_stand_select(message):
     try:
@@ -611,7 +619,7 @@ def integration_build_stand_select(message):
         msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
         bot.register_next_step_handler(msg, integration_build_tag_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def integration_tag_select(message):
     try:
@@ -622,7 +630,7 @@ def integration_tag_select(message):
         msg = bot.reply_to(message, "Введите номер версии (тег):")
         bot.register_next_step_handler(msg, integration_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def integration_build_tag_select(message):
     try:
@@ -633,7 +641,7 @@ def integration_build_tag_select(message):
         msg = bot.reply_to(message, "Введите номер версии (тег):")
         bot.register_next_step_handler(msg, integration_build_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def integration_build_job_jenkins(message):
     try:
@@ -650,7 +658,7 @@ def integration_build_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def integration_job_jenkins(message):
     try:
@@ -667,7 +675,7 @@ def integration_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 @bot.message_handler(commands=['gistek_pizi'])
 def action_select(message):
@@ -692,7 +700,7 @@ def pizi_stend_select(message):
         msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
         bot.register_next_step_handler(msg, pizi_app_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def pizi_app_select(message):
     try:
@@ -711,7 +719,7 @@ def pizi_app_select(message):
             msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
             bot.register_next_step_handler(msg, pizi_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def pizi_job_jenkins(message):
     try:
@@ -736,7 +744,7 @@ def pizi_job_jenkins(message):
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 @bot.message_handler(commands=['gistek_poib'])
 def action_select(message):
@@ -770,7 +778,7 @@ def poib_select(message):
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, poib_app_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops1')
+        errors(message)
 
 def poib_app_select(message):
     try:
@@ -783,7 +791,7 @@ def poib_app_select(message):
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, poib_tag_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def poib_tag_select(message):
     try:
@@ -794,7 +802,7 @@ def poib_tag_select(message):
         msg = bot.reply_to(message, "Введите номер версии (тег):")
         bot.register_next_step_handler(msg, poib_issue_select)
     except Exception as e:
-        bot.reply_to(message, 'oooops3')
+        errors(message)
 
 def poib_issue_select(message):
     try:
@@ -807,7 +815,7 @@ def poib_issue_select(message):
         msg = bot.reply_to(message, "Есть задача?", reply_markup=markup)
         bot.register_next_step_handler(msg, poib_issue)
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 def poib_issue(message):
     try:
@@ -821,7 +829,7 @@ def poib_issue(message):
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, poib_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops5')
+        errors(message)
 
 def poib_job_jenkins(message):
     try:
@@ -838,7 +846,7 @@ def poib_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 @bot.message_handler(commands=['restart_system'])
 def action_select(message):
@@ -863,7 +871,7 @@ def system_select(message):
         msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
         bot.register_next_step_handler(msg, system_job_jenkins)
     except Exception as e:
-        bot.reply_to(message, 'oooops2')
+        errors(message)
 
 def system_job_jenkins(message):
     try:
@@ -880,7 +888,7 @@ def system_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
     except Exception as e:
-        bot.reply_to(message, 'oooops4')
+        errors(message)
 
 @bot.message_handler(commands=['dev_klochkov'])
 
@@ -914,7 +922,7 @@ def dev_select(message):
             msg = bot.reply_to(message, "Введите номер версии (тег):")
             bot.register_next_step_handler(msg, dev_job)
     except Exception as e:
-        bot.reply_to(message, 'Обратись к Смолину чтобы в дженкинс выполнил ребут или сделай сам в ручную')
+        errors(message)
 
 def dev_job(message):
     try:
@@ -941,6 +949,6 @@ def dev_job(message):
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
         time.sleep(120)
     except Exception as e:
-        bot.reply_to(message, 'Обратись к Смолину чтобы в дженкинс выполнил джобу или сделай сам в ручную')
+        errors(message)
 
 bot.polling(none_stop=True)
