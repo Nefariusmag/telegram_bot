@@ -6,8 +6,8 @@ if [ -z "$status" ]; then
 fi
 
 if [ "$status" == "install" ]; then
-    pip3 install pytelegrambotapi
-    pip3 install jenkinsapi
+		apt-get install python3 python-setuptools pip3
+		pip3 install logging pyTelegramBotAPI jenkinsapi
 
 elif [ "$status" == "start" ]; then
     lockfile -r 0 file.lock || exit 1
@@ -23,5 +23,6 @@ elif [ "$status" == "stop" ]; then
     	kill -9 $(ps aux | grep -v grep | grep telegram_jenkins.py | awk '{print($2)}')
 
 elif [ "$status" == "what" ]; then
-    echo "Запусти с параметром: install \ start"
+    echo "Запусти с параметром: install \ start \ stop"
+
 fi

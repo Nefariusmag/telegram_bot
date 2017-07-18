@@ -68,14 +68,11 @@ def errors(message):
     bot = telebot.TeleBot(config.token)
     bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал. Но если такое второй раз, то обратись к Смолину чтобы он сделал или сам ручками. Заодно пусть он посмотрит логи и рестартует бота.')
 
-@bot.message_handler(commands=['start'])
-def handle_start(message):
-    text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "Привет, друг. Тут нет ничего интересного - уходи.")
-
-@bot.message_handler(commands=['help'])
+@bot.message_handler(commands=['help', 'start'])
 def handle_true_help(message):
+    if message.text == "/start":
+        text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
+        logging.warning( u"%s", text)
     text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     id_user = message.chat.id
