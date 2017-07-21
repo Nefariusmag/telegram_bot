@@ -61,12 +61,39 @@ def secure_dev(message):
         user_true = "false"
 
 def errors(message):
-    text = "params: {}, build_deloy: {}, stend: {}, arm: {}, issue_select: {}, issue_id: {}, tag: {}, open_close: {}".format(params, build_deloy, stend, arm, issue_select, issue_id, tag, open_close)
-    logging.warning( u"%s", text)
+    # text = "params: {}, build_deloy: {}, stend: {}, arm: {}, issue_select: {}, issue_id: {}, tag: {}, open_close: {}".format(params, build_deloy, stend, arm, issue_select, issue_id, tag, open_close)
+    text = "Ошибочка вышла, скорее всего с параметрами."
+    logging.error( u"%s", text)
     jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
     jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
     bot = telebot.TeleBot(config.token)
-    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал. Но если такое второй раз, то обратись к Смолину чтобы он сделал или сам ручками. Заодно пусть он посмотрит логи и рестартует бота.')
+    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал. Но если такое второй раз, то обратись к Ерохину\Смолину чтобы он сделал или сам ручками. Заодно пусть он посмотрит логи и рестартует бота.')
+
+def test_run(message, arm, params, time_timeout, job):
+    name_user = "{}({}):".format(message.chat.username, message.chat.id)
+    time.sleep(time_timeout)
+    s = str(job.get_last_completed_build())
+    s = int(s[s.find('#')+1:])
+    build = job.get_build(s)
+    # print(s)
+    task_status = str(build.is_good())
+    # print(task_status)
+    if task_status == "True":
+        text = "Я сам в шоке, но {} готово!".format(job)
+        bot.send_message(message.chat.id, text)
+        # bot.send_message(message.chat.id, "Я сам в шоке, но готово!")
+        text = "{} выполнилось {} c {}".format(name_user, arm, params)
+        # text = "{} собралось".format(name_user)
+        logging.warning( u"%s", text)
+    else:
+        text = "Ошибка обратитесь к администратору, чтобы посмотрел логи в jenkins по поводу {}!".format(job)
+        bot.send_message(message.chat.id, text)
+        # bot.send_message(message.chat.id, "Ошибка обратитесь к администратору, чтобы посмотрел логи в jenkins")
+        text = "{} не выполнилось {} с {}, сейчас посмотрим логи".format(name_user, arm, params)
+        # text = "{} не собралось, сейчас посмотрим логи".format(name_user)
+        logging.error( u"%s", text)
+        text = build.get_console()
+        logging.error( u"%s", text)
 
 @bot.message_handler(commands=['help', 'start'])
 def handle_true_help(message):
@@ -195,7 +222,9 @@ def arm_job_jenkins(message):
         jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
         text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет).")
+        job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
+        test_run(message, var.arm, params, 70, job)
     except Exception as e:
         errors(message)
 
@@ -316,12 +345,14 @@ def pentaho_job_jenkins(message):
                 params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id,}
-        text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы выполнить {} для Пентахи".format(name_user, var.arm)
         logging.warning( u"%s", text)
         jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
         text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 7 минут и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
+        test_run(message, var.arm, params, 70, job)
     except Exception as e:
         errors(message)
 
@@ -337,7 +368,9 @@ def pentaho_build_job_jenkins(message):
         jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 4 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Pentaho/Build_' + str(var.arm))
+        test_run(message, var.arm, "Без этого", 240, job)
     except Exception as e:
         errors(message)
 
@@ -454,7 +487,9 @@ def portal_job_jenkins(message):
         jenkins.build_job('GISTEK_Portal/Update_App', params)
         text = "{} на портале {} обновляет {}".format(name_user, var.stend, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + " на портале " + str(var.stend) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stend) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Portal/Update_App')
+        test_run(message, var.arm, params, 180, job)
     except Exception as e:
         errors(message)
 
@@ -470,7 +505,9 @@ def portal_build_job_jenkins(message):
         jenkins.build_job('GISTEK_Portal/' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 1 минута (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 3 минуты (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Portal/' + str(var.arm))
+        test_run(message, var.arm, "Без оных", 180, job)
     except Exception as e:
         errors(message)
 
@@ -515,10 +552,11 @@ def mobile_job_build_jenkins(message):
         jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 4 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_MobileApp/Build_' + str(var.arm))
+        test_run(message, var.arm, "Без оных", 200, job)
     except Exception as e:
         errors(message)
-
 
 def mobile_app_select(message):
     try:
@@ -557,7 +595,9 @@ def mobile_job_jenkins(message):
         jenkins.build_job('GISTEK_MobileApp/Update', params)
         text = "{} для мобильного приложения выполняется {} тег {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_MobileApp/Update')
+        test_run(message, var.arm, params, 120, job)
     except Exception as e:
         errors(message)
 
@@ -653,7 +693,9 @@ def integration_build_job_jenkins(message):
         jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
         text = "{} собирает для интеграционной подсистемы {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Integration/' + str(var.arm))
+        test_run(message, var.arm, params, 180, job)
     except Exception as e:
         errors(message)
 
@@ -670,7 +712,9 @@ def integration_job_jenkins(message):
         jenkins.build_job('GISTEK_Integration/Update', params)
         text = "{} обновляет на интеграционной подсистеме {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Integration/Update')
+        test_run(message, var.arm, params, 300, job)
     except Exception as e:
         errors(message)
 
@@ -731,7 +775,9 @@ def pizi_job_jenkins(message):
             jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
             text = "{} собирает для сбора {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 5 минуточек и " + str(var.arm) + " для сбора соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+            bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " для сбора соберется (если ошибки в jenkins не будет)")
+            job = jenkins.get_job('GISTEK_Pizi/Build_' + str(var.arm))
+            test_run(message, var.arm, "Без оных", 185, job)
         if var.build_deloy == "Deploy":
             params = {"stend": var.stend}
             text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора на {}".format(name_user, var.arm, var.stend)
@@ -739,7 +785,9 @@ def pizi_job_jenkins(message):
             jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
             text = "{} обновляет на Сборе {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет), а пока можно продолжать..")
+            bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет)")
+            job = jenkins.get_job('GISTEK_Pizi/Update_' + str(var.arm))
+            test_run(message, var.arm, params, 120, job)
     except Exception as e:
         errors(message)
 
@@ -768,7 +816,9 @@ def poib_select(message):
             jenkins.build_job('GISTEK_Poib/Build')
             text = "{} собирает ПОИБ".format(name_user)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 5 минуточек и ПОИБ соберется (если ошибки в jenkins не будет), а пока можно продолжать..")
+            bot.send_message(message.chat.id, "..еще 5 минуточек и ПОИБ соберется (если ошибки в jenkins не будет)")
+            job = jenkins.get_job('GISTEK_Poib/Build')
+            test_run(message, var.arm, "Без оных", 420, job)
         if var.build_deloy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
@@ -841,7 +891,9 @@ def poib_job_jenkins(message):
         jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
         text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Poib/' + str(var.arm))
+        test_run(message, var.arm, params, 120, job)
     except Exception as e:
         errors(message)
 
@@ -883,7 +935,9 @@ def system_job_jenkins(message):
         jenkins.build_job('GISTEK_Restart', params)
         text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stend)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
+        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Restart')
+        test_run(message, var.arm, params, 70, job)
     except Exception as e:
         errors(message)
 
@@ -914,7 +968,9 @@ def dev_select(message):
             jenkins.build_job('GISTEK_Restart', params)
             text = "{} перезагружается pentaho на DEV".format(name_user)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится, (если ошибки в jenkins не будет), а пока можно продолжать..")
+            bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится, (если ошибки в jenkins не будет)")
+            job = jenkins.get_job('GISTEK_Restart')
+            test_run(message, "Без оных", params, 70, job)
         if var.build_deloy == "deploy":
             msg = bot.reply_to(message, "Введите номер версии (тег):")
             bot.register_next_step_handler(msg, dev_job)
@@ -935,16 +991,17 @@ def dev_job(message):
         text = "{} собирает fileProperties".format(name_user)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 3 минуты и плагин fileProperties соберется (если ошибки в jenkins не будет)")
-        import time
-        time.sleep(180)
+        job = jenkins.get_job('GISTEK_Pentaho/Build_fileProperties')
+        test_run(message, "Без оных", params, 180, job)
         params = {"stand": "DEV", "tags": "update_fileProperties", "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы обновить fileProperties версии {} для пентахи на DEV".format(name_user, var.tag)
         logging.warning( u"%s", text)
         jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
         text = "{} на Пентахах DEV обновляется fileProperties версия {}".format(name_user, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет), а пока можно продолжать..")
-        time.sleep(120)
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
+        test_run(message, "Без оных", params, 120, job)
     except Exception as e:
         errors(message)
 
