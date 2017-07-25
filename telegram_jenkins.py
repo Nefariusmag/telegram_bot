@@ -13,6 +13,7 @@ def lock_file(fname):
 lock = lock_file('telegram_jenkins.py')
 
 import time
+import os
 
 import jenkinsapi
 from jenkinsapi.jenkins import Jenkins
@@ -75,25 +76,28 @@ def test_run(message, arm, params, time_timeout, job):
     s = str(job.get_last_completed_build())
     s = int(s[s.find('#')+1:])
     build = job.get_build(s)
-    # print(s)
     task_status = str(build.is_good())
-    # print(task_status)
     if task_status == "True":
         text = "Я сам в шоке, но {} готово!".format(job)
         bot.send_message(message.chat.id, text)
-        # bot.send_message(message.chat.id, "Я сам в шоке, но готово!")
         text = "{} выполнилось {} c {}".format(name_user, arm, params)
-        # text = "{} собралось".format(name_user)
         logging.warning( u"%s", text)
     else:
-        text = "Ошибка обратитесь к администратору, чтобы посмотрел логи в jenkins по поводу {}!".format(job)
+        text = "Ошибка, посмотрите логи и обратитесь к администратору"
         bot.send_message(message.chat.id, text)
-        # bot.send_message(message.chat.id, "Ошибка обратитесь к администратору, чтобы посмотрел логи в jenkins")
         text = "{} не выполнилось {} с {}, сейчас посмотрим логи".format(name_user, arm, params)
-        # text = "{} не собралось, сейчас посмотрим логи".format(name_user)
         logging.error( u"%s", text)
         text = build.get_console()
-        logging.error( u"%s", text)
+        logging.error( u"###################\n%s\n###################", text)
+        doc = str("error_{}.log".format(arm))
+        fout = open(doc, 'w')
+        print(text, file=fout)
+        fout.close()
+        doc = open(doc, 'rb')
+        print(doc)
+        bot.send_document(message.chat.id, doc)
+        doc = str("error_{}.log".format(arm))
+        os.remove(doc)
 
 @bot.message_handler(commands=['help', 'start'])
 def handle_true_help(message):
@@ -818,7 +822,7 @@ def poib_select(message):
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 5 минуточек и ПОИБ соберется (если ошибки в jenkins не будет)")
             job = jenkins.get_job('GISTEK_Poib/Build')
-            test_run(message, var.arm, "Без оных", 420, job)
+            test_run(message, var.arm, "Без оных", 250, job)
         if var.build_deloy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
