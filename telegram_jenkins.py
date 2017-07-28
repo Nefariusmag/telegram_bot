@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# блокирования файла, чтобы не запускали несколько раз
 def lock_file(fname):
     import fcntl
     _lock_file = open(fname, 'a+')
@@ -14,10 +15,12 @@ lock = lock_file('telegram_jenkins.py')
 
 import time
 import os
+import random
 
 import jenkinsapi
 from jenkinsapi.jenkins import Jenkins
 
+# логирование, обозначается уровень логирования INFO/DEBUG/ERROR/CRITICAL
 import logging
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO, filename = u'telegram_bot.log')
 
@@ -25,18 +28,32 @@ import config
 import telebot
 from telebot import types
 
-i = 0
-while i != 1:
-    try:
-        jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
-        jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
-        bot = telebot.TeleBot(config.token)
-        i = 1
-    except Exception as e:
-        logging.error(u"Авторизация не прошла, пробуем еще раз")
+bot = telebot.TeleBot(config.token)
 
-logging.warning(u'В jenkins авторизовались')
+# авторизация в jenkins'ах (зацикленаня, чтобы точно выполнилась)
+def authentication(arg):
+    i = arg
+    while i != 1:
+        try:
+            jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+            jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+            logging.warning(u'В jenkins авторизовались')
+            i = 1
+        except Exception as e:
+            logging.error(u"Авторизация не прошла, пробуем еще раз")
+# i = 0
+# while i != 1:
+#     try:
+#         jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
+#         jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+#         bot = telebot.TeleBot(config.token)
+#         i = 1
+#     except Exception as e:
+#         logging.error(u"Авторизация не прошла, пробуем еще раз")
 
+authentication(0)
+
+# функция проверки доступа пользователя
 def secure(message):
     global user_true
     if message.chat.id in config.true_id:
@@ -49,6 +66,7 @@ def secure(message):
         bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
         user_true = "false"
 
+# функция проверки доступа пользователя (для разработчиков - укороченная)
 def secure_dev(message):
     global user_true
     if message.chat.id in config.true_id_dev:
@@ -61,21 +79,24 @@ def secure_dev(message):
         bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
         user_true = "false"
 
+# функция сообщения об ошибке
 def errors(message):
-    # text = "params: {}, build_deloy: {}, stend: {}, arm: {}, issue_select: {}, issue_id: {}, tag: {}, open_close: {}".format(params, build_deloy, stend, arm, issue_select, issue_id, tag, open_close)
-    text = "Ошибочка вышла, скорее всего с параметрами."
+    text = "Ошибочка вышла, скорее всего с авторизацией в jenkins, ну или с параметрами."
     logging.error( u"%s", text)
-    jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
-    jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
-    bot = telebot.TeleBot(config.token)
-    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал. Но если такое второй раз, то обратись к Ерохину\Смолину чтобы он сделал или сам ручками. Заодно пусть он посмотрит логи и рестартует бота.')
+    authentication(0)
+    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал.')
 
+# функция проверки на выполенния джобы в jenkins
 def test_run(message, arm, params, time_timeout, job):
     name_user = "{}({}):".format(message.chat.username, message.chat.id)
+    # пауза
     time.sleep(time_timeout)
+    # получения номера задачи
     s = str(job.get_last_completed_build())
+    #  обрезка лишних символов
     s = int(s[s.find('#')+1:])
     build = job.get_build(s)
+    # получение статуса задачи true\false
     task_status = str(build.is_good())
     if task_status == "True":
         text = "Я сам в шоке, но {} готово!".format(job)
@@ -87,18 +108,23 @@ def test_run(message, arm, params, time_timeout, job):
         bot.send_message(message.chat.id, text)
         text = "{} не выполнилось {} с {}, сейчас посмотрим логи".format(name_user, arm, params)
         logging.error( u"%s", text)
+        # получение из jenkins логов из джобы
         text = build.get_console()
         logging.error( u"###################\n%s\n###################", text)
+        # создание файла для записи туда лога ошибки
         doc = str("error_{}.log".format(arm))
         fout = open(doc, 'w')
         print(text, file=fout)
         fout.close()
+        # отправка файла пользователю
         doc = open(doc, 'rb')
-        print(doc)
+        # print(doc)
         bot.send_document(message.chat.id, doc)
+        # удаление файла с логом ошибки
         doc = str("error_{}.log".format(arm))
         os.remove(doc)
 
+# инициализация и стартовое меню бота
 @bot.message_handler(commands=['help', 'start'])
 def handle_true_help(message):
     if message.text == "/start":
@@ -122,6 +148,7 @@ def handle_true_help(message):
 
 user_dict = {}
 
+# класс для переменных что используют функции
 class Var:
     def __init__(self, name):
         self.build_deloy = None
@@ -132,6 +159,7 @@ class Var:
         self.tag = None
         self.open_close = None
 
+# джоба по синхронизации данных со стендов
 @bot.message_handler(commands=['sync'])
 def sync_start(message):
     secure_dev(message)
@@ -822,7 +850,7 @@ def poib_select(message):
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 5 минуточек и ПОИБ соберется (если ошибки в jenkins не будет)")
             job = jenkins.get_job('GISTEK_Poib/Build')
-            test_run(message, var.arm, "Без оных", 250, job)
+            test_run(message, "перезапуск ПОИБ", "без параметров", 250, job)
         if var.build_deloy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
@@ -941,7 +969,7 @@ def system_job_jenkins(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Restart')
-        test_run(message, var.arm, params, 70, job)
+        test_run(message, var.arm, params, 40, job)
     except Exception as e:
         errors(message)
 
@@ -1008,5 +1036,18 @@ def dev_job(message):
         test_run(message, "Без оных", params, 120, job)
     except Exception as e:
         errors(message)
+
+# #funny
+# @bot.message_handler(content_types=["text"])
+# def random_answer_messages(message):
+#     os.system("curl http://copout.me/get-excuse/143 > lol.py")
+#     os.system('echo $(grep "<p>" lol.py | grep -v "Голосов" | grep -v "спаме") > lol.py')
+#     os.system('sed -i \'s|<p>|"|g\' lol.py')
+#     os.system('sed -i \'s|</p>|",|g\' lol.py')
+#     os.system('sed -i "1 s|^|text = [|" lol.py')
+#     os.system('sed -i \'1 s|$|Такие дела"]|\' lol.py')
+#     import lol
+#     text = random.choice(lol.text)
+#     bot.send_message(message.chat.id, text)
 
 bot.polling(none_stop=True)
