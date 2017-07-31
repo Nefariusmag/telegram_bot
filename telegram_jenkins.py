@@ -35,6 +35,8 @@ def authentication(arg):
     i = arg
     while i != 1:
         try:
+            global jenkins
+            global jenkins_dkp
             jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
             jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
             logging.warning(u'В jenkins авторизовались')
@@ -239,26 +241,26 @@ def arm_issue(message):
         errors(message)
 
 def arm_job_jenkins(message):
-    try:
-        chat_id = message.chat.id
-        issue_id = message.text
-        var = user_dict[chat_id]
-        var.issue_id = issue_id
-        if var.issue_select == "No":
-            params = {"stend": var.stend}
-        if var.issue_select == "Yes":
-            params = {"stend": var.stend, "issue_id": var.issue_id}
-        text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stend)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
-        text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет).")
-        job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
-        test_run(message, var.arm, params, 70, job)
-    except Exception as e:
-        errors(message)
+    # try:
+    chat_id = message.chat.id
+    issue_id = message.text
+    var = user_dict[chat_id]
+    var.issue_id = issue_id
+    if var.issue_select == "No":
+        params = {"stend": var.stend}
+    if var.issue_select == "Yes":
+        params = {"stend": var.stend, "issue_id": var.issue_id}
+    text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stend)
+    logging.warning( u"%s", text)
+    bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+    jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+    text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
+    logging.warning( u"%s", text)
+    bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет).")
+    job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
+    test_run(message, var.arm, params, 70, job)
+    # except Exception as e:
+    #     errors(message)
 
 ##### start
 
