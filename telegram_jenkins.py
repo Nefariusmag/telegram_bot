@@ -30,6 +30,10 @@ from telebot import types
 
 bot = telebot.TeleBot(config.token)
 
+import gitlab
+gl = gitlab.Gitlab('http://git.gistek.lanit.ru', config.token_gitlab)
+gl.auth()
+
 # авторизация в jenkins'ах (зацикленаня, чтобы точно выполнилась)
 def authentication(arg):
     i = arg
@@ -43,15 +47,6 @@ def authentication(arg):
             i = 1
         except Exception as e:
             logging.error(u"Авторизация не прошла, пробуем еще раз")
-# i = 0
-# while i != 1:
-#     try:
-#         jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
-#         jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
-#         bot = telebot.TeleBot(config.token)
-#         i = 1
-#     except Exception as e:
-#         logging.error(u"Авторизация не прошла, пробуем еще раз")
 
 authentication(0)
 
@@ -125,6 +120,14 @@ def test_run(message, arm, params, time_timeout, job):
         # удаление файла с логом ошибки
         doc = str("error_{}.log".format(arm))
         os.remove(doc)
+
+# функция получения тегов проекта из Gitlab
+def tag_gitlab(name_project):
+    project = gl.projects.get(name_project)
+    num = 0
+    for tags in project.tags.list():
+        num += 1
+        exec('item%d="%s"' % (num,str(tags.name)), globals())
 
 # инициализация и стартовое меню бота
 @bot.message_handler(commands=['help', 'start'])
@@ -241,26 +244,26 @@ def arm_issue(message):
         errors(message)
 
 def arm_job_jenkins(message):
-    # try:
-    chat_id = message.chat.id
-    issue_id = message.text
-    var = user_dict[chat_id]
-    var.issue_id = issue_id
-    if var.issue_select == "No":
-        params = {"stend": var.stend}
-    if var.issue_select == "Yes":
-        params = {"stend": var.stend, "issue_id": var.issue_id}
-    text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stend)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-    jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
-    text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет).")
-    job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
-    test_run(message, var.arm, params, 70, job)
-    # except Exception as e:
-    #     errors(message)
+    try:
+        chat_id = message.chat.id
+        issue_id = message.text
+        var = user_dict[chat_id]
+        var.issue_id = issue_id
+        if var.issue_select == "No":
+            params = {"stend": var.stend}
+        if var.issue_select == "Yes":
+            params = {"stend": var.stend, "issue_id": var.issue_id}
+        text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stend)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+        jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+        text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет).")
+        job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
+        test_run(message, var.arm, params, 70, job)
+    except Exception as e:
+        errors(message)
 
 ##### start
 
@@ -314,8 +317,39 @@ def pentaho_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "update_plugins":
+            tag_gitlab("PENTAHO/pentaho-plugins")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item3, item4, item5)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "update_fileProperties":
+            tag_gitlab("PENTAHO/pentaho-fileProperties")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "update_quixote_theme":
+            tag_gitlab("PENTAHO/quixote-theme")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "update_langpack":
+            tag_gitlab("PENTAHO/pentahoLanguagePacks")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "update_cas_tek":
+            tag_gitlab("PENTAHO/pentaho-cas-tek")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "update_mondrian":
+            msg = bot.reply_to(message, "Введите номер версии (тег):")
+            bot.register_next_step_handler(msg, pentaho_issue_select)
     except Exception as e:
         errors(message)
 
@@ -354,35 +388,17 @@ def pentaho_job_jenkins(message):
         var.issue_id = issue_id
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
-            if var.arm == "update_plugins":
-                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
-            if var.arm == "update_fileProperties":
-                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
-            if var.arm == "update_quixote_theme":
-                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
-            if var.arm == "update_langpack":
-                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
-            if var.arm == "update_cas_tek":
-                params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
+            params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stend": var.stend, "tags": str(var.arm)}
         if var.issue_select == "Yes":
-            if var.arm == "update_plugins":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "update_fileProperties":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "update_quixote_theme":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "update_langpack":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            if var.arm == "update_cas_tek":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
+            params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id,}
         text = "{} cтучится в jenkins чтобы выполнить {} для Пентахи".format(name_user, var.arm)
         logging.warning( u"%s", text)
         jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
-        text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
+        text = "{} на пентахи выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
@@ -473,8 +489,92 @@ def portal_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "hook-asset-publisher":
+            tag_gitlab("PORTAL/hook-asset-publisher")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4, item5)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "hook-search":
+            tag_gitlab("PORTAL/hook-search")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4, item5, item6, item7)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "inspinia-theme":
+            tag_gitlab("PORTAL/inspinia-theme")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "languagePackRU":
+            tag_gitlab("PORTAL/hook-languagePackRU")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4, item5, item6, item7)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "login-hook":
+            tag_gitlab("PORTAL/login-hook")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "mainpageGEO":
+            tag_gitlab("PORTAL/mainpageGEO")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "notification-portlet":
+            tag_gitlab("PORTAL/notification-portlet")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "npa-loader":
+            tag_gitlab("PORTAL/npa-loader-portlet")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "portal-iframe":
+            tag_gitlab("PORTAL/portal-iframe")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "reports-display-portlet":
+            tag_gitlab("PORTAL/reports-display-portlet")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "slider":
+            tag_gitlab("PORTAL/slider")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "subsystem-search":
+            tag_gitlab("PORTAL/subsystem-search")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "support-mail-portlet":
+            tag_gitlab("PORTAL/support-mail-portlet")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "urc-theme":
+            tag_gitlab("PORTAL/urc-theme")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, portal_issue_select)
+        # msg = bot.reply_to(message, "Введите номер версии (тег):")
+        # bot.register_next_step_handler(msg, portal_issue_select)
     except Exception as e:
         errors(message)
 
@@ -611,8 +711,20 @@ def mobile_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, mobile_job_jenkins)
+        if var.arm == "update_web_service":
+            tag_gitlab("MOBILE-APP/web-service-java")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4, item5)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, mobile_job_jenkins)
+        if var.arm == "update_langpack":
+            tag_gitlab("MOBILE-APP/tek-portlet")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, mobile_job_jenkins)
+        # msg = bot.reply_to(message, "Введите номер версии (тег):")
+        # bot.register_next_step_handler(msg, mobile_job_jenkins)
     except Exception as e:
         errors(message)
 
@@ -673,7 +785,7 @@ def integration_stand_select(message):
         var = user_dict[chat_id]
         var.stend = stend
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update", "update_generator")
+        markup.add("update", "update_generator", "update_logui")
         msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
         bot.register_next_step_handler(msg, integration_tag_select)
     except Exception as e:
@@ -698,8 +810,26 @@ def integration_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, integration_job_jenkins)
+        if var.arm == "update_generator":
+            tag_gitlab("INTEGRATIONAL/generator")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_job_jenkins)
+        if var.arm == "update":
+            tag_gitlab("INTEGRATIONAL/is")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_job_jenkins)
+        if var.arm == "update_logui":
+            tag_gitlab("INTEGRATIONAL/log-ui")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_job_jenkins)
+        # msg = bot.reply_to(message, "Введите номер версии (тег):")
+        # bot.register_next_step_handler(msg, integration_job_jenkins)
     except Exception as e:
         errors(message)
 
@@ -709,8 +839,26 @@ def integration_build_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, integration_build_job_jenkins)
+        if var.arm == "Build_generator":
+            tag_gitlab("INTEGRATIONAL/generator")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_build_job_jenkins)
+        if var.arm == "Build_mis":
+            tag_gitlab("INTEGRATIONAL/is")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_build_job_jenkins)
+        if var.arm == "Build_LogUI":
+            tag_gitlab("INTEGRATIONAL/log-ui")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+            bot.register_next_step_handler(msg, integration_build_job_jenkins)
+        # msg = bot.reply_to(message, "Введите номер версии (тег):")
+        # bot.register_next_step_handler(msg, integration_build_job_jenkins)
     except Exception as e:
         errors(message)
 
@@ -875,15 +1023,15 @@ def poib_app_select(message):
         errors(message)
 
 def poib_tag_select(message):
-    try:
-        chat_id = message.chat.id
-        arm = message.text
-        var = user_dict[chat_id]
-        var.arm = arm
-        msg = bot.reply_to(message, "Введите номер версии (тег):")
-        bot.register_next_step_handler(msg, poib_issue_select)
-    except Exception as e:
-        errors(message)
+    chat_id = message.chat.id
+    arm = message.text
+    var = user_dict[chat_id]
+    var.arm = arm
+    tag_gitlab("SECURITY/poib")
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.add(item92, item93, item94, item95, item96, item97, item98, item99)
+    msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
+    bot.register_next_step_handler(msg, poib_issue_select)
 
 def poib_issue_select(message):
     try:
@@ -1006,8 +1154,13 @@ def dev_select(message):
             job = jenkins.get_job('GISTEK_Restart')
             test_run(message, "Без оных", params, 70, job)
         if var.build_deloy == "deploy":
-            msg = bot.reply_to(message, "Введите номер версии (тег):")
+            tag_gitlab("PENTAHO/pentaho-fileProperties")
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+            msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, dev_job)
+            # msg = bot.reply_to(message, "Введите номер версии (тег):")
+            # bot.register_next_step_handler(msg, dev_job)
     except Exception as e:
         errors(message)
 

@@ -6,8 +6,9 @@ if [ -z "$status" ]; then
 fi
 
 if [ "$status" == "install" ]; then
-		apt-get install python3 python-setuptools pip3
-		pip3 install logging pyTelegramBotAPI jenkinsapi
+		apt-get install python3 python-setuptools
+		yum install python3 python-setuptools
+		pip install logging pyTelegramBotAPI jenkinsapi python-gitlab
 
 elif [ "$status" == "start" ]; then
     lockfile -r 0 file.lock || exit 1
