@@ -1179,14 +1179,14 @@ def dev_job(message):
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 3 минуты и плагин fileProperties соберется (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Pentaho/Build_fileProperties')
-        test_run(message, "Без оных", params, 180, job)
-        params = {"stand": "DEV", "tags": "update_fileProperties", "version": str(var.tag)}
+        test_run(message, "Без параметров", params, 180, job)
+        params = {"stand": "DEV", "tags": "fileProperties", "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы обновить fileProperties версии {} для пентахи на DEV".format(name_user, var.tag)
         logging.warning( u"%s", text)
         jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
         text = "{} на Пентахах DEV обновляется fileProperties версия {}".format(name_user, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится до версии " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
         test_run(message, "Без оных", params, 120, job)
     except Exception as e:

@@ -14,8 +14,9 @@ test.py
 Установить: python3 и pip3
 
 Необходимые библиотеки:
-apt-get install python3 python-setuptools pip3
-pip3 install logging pyTelegramBotAPI jenkinsapi
+apt-get install python3 python-setuptools
+yum install python3 python-setuptools
+pip3 install logging pyTelegramBotAPI jenkinsapi python-gitlab
 
 Добавить в крон:
 */15 * * * * cd ~/telegram_bot && ./start.sh start &
