@@ -242,10 +242,10 @@ def arm_issue(message):
         var = user_dict[chat_id]
         var.issue_select = issue_select
         if var.issue_select == "No":
-            msg = bot.reply_to(message, "Введите 0:")
+            arm_job_jenkins(message)
         if var.issue_select == "Yes":
             msg = bot.reply_to(message, "Введите номер:")
-        bot.register_next_step_handler(msg, arm_job_jenkins)
+            bot.register_next_step_handler(msg, arm_job_jenkins)
     except Exception as e:
         errors(message)
 
@@ -379,7 +379,7 @@ def pentaho_issue(message):
         var = user_dict[chat_id]
         var.issue_select = issue_select
         if var.issue_select == "No":
-            msg = bot.reply_to(message, "Введите 0:")
+            pentaho_job_jenkins(message)
         if var.issue_select == "Yes":
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, pentaho_job_jenkins)
@@ -604,7 +604,7 @@ def portal_issue(message):
         var = user_dict[chat_id]
         var.issue_select = issue_select
         if var.issue_select == "No":
-            msg = bot.reply_to(message, "Введите 0:")
+            portal_job_jenkins(message)
         if var.issue_select == "Yes":
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, portal_job_jenkins)
@@ -1059,7 +1059,7 @@ def poib_issue(message):
         var = user_dict[chat_id]
         var.issue_select = issue_select
         if var.issue_select == "No":
-            msg = bot.reply_to(message, "Введите 0:")
+            poib_job_jenkins(message)
         if var.issue_select == "Yes":
             msg = bot.reply_to(message, "Введите номер:")
         bot.register_next_step_handler(msg, poib_job_jenkins)
@@ -1132,7 +1132,6 @@ def system_job_jenkins(message):
         errors(message)
 
 @bot.message_handler(commands=['dev_klochkov'])
-
 def action_select(message):
     secure_dev(message)
     if user_true == "true":
