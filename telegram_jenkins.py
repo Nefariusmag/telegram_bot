@@ -139,7 +139,7 @@ def handle_true_help(message):
     logging.warning( u"%s", text)
     id_user = message.chat.id
     bot.send_message(message.chat.id, """Что я умею!
-
+------------------------------------------
 Сборка АРМ: /gistek_build_arm \n
 Подсистема Пентахо: /gistek_pentaho \n
 Подсистема Портал: /gistek_portal  \n
@@ -149,7 +149,13 @@ def handle_true_help(message):
 Подсистема ПОИБ: /gistek_poib \n
 Перезапуск подсистем /restart_system \n
 
-Синхронизация данных между стендами: /sync""")
+Синхронизация данных между стендами: /sync
+------------------------------------------""")
+    secure_dev(message)
+    if user_true == "true":
+        bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
+        authentication(0)
+        bot.send_message(message.chat.id, "Успех. Делайте, то что нужно.")
 
 user_dict = {}
 
@@ -1097,6 +1103,8 @@ def system_select(message):
         var = Var(stend)
         user_dict[chat_id] = var
         var.stend = stend
+        # if var.stend == "PI":
+        #     bot.send_message(message.chat.id, "")
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
         msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
