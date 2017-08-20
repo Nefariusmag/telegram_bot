@@ -50,6 +50,19 @@ def authentication(arg):
 
 authentication(0)
 
+user_dict = {}
+
+# класс для переменных что используют функции
+class Var:
+    def __init__(self, name):
+        self.build_deloy = None
+        self.stand = name
+        self.arm = None
+        self.issue_select = None
+        self.issue_id = None
+        self.tag = None
+        self.open_close = None
+
 # функция проверки доступа пользователя
 def secure(message):
     global user_true
@@ -138,37 +151,58 @@ def handle_true_help(message):
     text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     id_user = message.chat.id
-    bot.send_message(message.chat.id, """Что я умею!
-------------------------------------------
-Сборка АРМ: /gistek_build_arm \n
-Подсистема Пентахо: /gistek_pentaho \n
-Подсистема Портал: /gistek_portal  \n
-Подсистема мобильного приложения: /gistek_mobile \n
-Подсистема интеграционная: /gistek_integration \n
-Подсистема ПИЗИ: /gistek_pizi \n
-Подсистема ПОИБ: /gistek_poib \n
-Перезапуск подсистем /restart_system \n
+#     bot.send_message(message.chat.id, """Что я умею!
+# ------------------------------------------
+# Сборка АРМ: \n/gistek_build_arm \n
+# Подсистема Пентахо: \n/gistek_pentaho \n
+# Подсистема Портал: \n/gistek_portal  \n
+# Подсистема мобильного приложения: \n/gistek_mobile \n
+# Подсистема интеграционная: \n/gistek_integration \n
+# Подсистема ПИЗИ: \n/gistek_pizi \n
+# Подсистема ПОИБ: \n/gistek_poib \n
+# Перезапуск подсистем \n/restart_system \n
+#
+# Синхронизация данных между стендами: \n/sync
+# ------------------------------------------""")
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.add("АРМ", "Пентаха", "Портал", "Мобильное приложение", "Интеграционная подсистема", "Сбор", "ПОИБ", "Перезапуск", "Синхронизация стендов")
+    msg = bot.reply_to(message, "Главное меню, \nвыберите, что будем делать:", reply_markup=markup)
+    bot.register_next_step_handler(msg, system_select)
 
-Синхронизация данных между стендами: /sync
-------------------------------------------""")
+def system_select(message):
+    # try:
+    chat_id = message.chat.id
+    stand = message.text
+    var = Var(stand)
+    user_dict[chat_id] = var
     secure_dev(message)
     if user_true == "true":
         bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
         authentication(0)
-        bot.send_message(message.chat.id, "Успех. Делайте, то что нужно.")
-
-user_dict = {}
-
-# класс для переменных что используют функции
-class Var:
-    def __init__(self, name):
-        self.build_deloy = None
-        self.stend = name
-        self.arm = None
-        self.issue_select = None
-        self.issue_id = None
-        self.tag = None
-        self.open_close = None
+        # bot.send_message(message.chat.id, "Успех. Делайте, то что нужно.")
+    name_user = "{}({}):".format(message.chat.username, message.chat.id)
+    text = "{} выбрал {}".format(name_user, var.stand)
+    logging.warning( u"%s", text)
+    if stand == "АРМ":
+        arm_stand_select(message)
+    if stand == "Пентаха":
+        pentaho_action_select(message)
+    if stand == "Портал":
+        portal_action_select(message)
+    if stand == "Мобильное приложение":
+        mobile_action_select(message)
+    if stand == "Интеграционная подсистема":
+        integration_action_select(message)
+    if stand == "Сбор":
+        pizi_action_select(message)
+    if stand == "ПОИБ":
+        poib_action_select(message)
+    if stand == "Перезапуск":
+        system_action_select(message)
+    if stand == "Синхронизация стендов":
+        sync_start(message)
+    # except Exception as e:
+    #     errors(message)
 
 # джоба по синхронизации данных со стендов
 @bot.message_handler(commands=['sync'])
@@ -185,21 +219,21 @@ def sync_start(message):
 def sync_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
-        var = Var(stend)
+        stand = message.text
+        var = Var(stand)
         user_dict[chat_id] = var
-        text = "{} запускает {}".format(name_user, var.stend)
+        text = "{} запускает {}".format(name_user, var.stand)
         logging.warning( u"%s", text)
-        jenkins_dkp.build_job(str(var.stend))
+        jenkins_dkp.build_job(str(var.stand))
     except Exception as e:
         text = "{} неведомая херня, но джоба выполняется, прячу багу".format(name_user)
         logging.warning( u"%s", text)
-    text = "{} запустилась {}".format(name_user, var.stend)
+    text = "{} запустилась {}".format(name_user, var.stand)
     logging.warning( u"%s", text)
     bot.send_message(message.chat.id, "Запустилась синхронизация, в среднем выполняется 45 минут. Можно продолжать работу.")
 
 @bot.message_handler(commands=['gistek_build_arm'])
-def stend_select(message):
+def arm_stand_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -212,8 +246,8 @@ def stend_select(message):
 def arm_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
-        var = Var(stend)
+        stand = message.text
+        var = Var(stand)
         user_dict[chat_id] = var
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add("admin_kl", "admin_net", "all_mak_inf", "arm_access", "fpi-autoregistration", "gis_des", "is_transport", "kontrol", "load_ssb", "offline", "template_cleaner", "wmk_gistek", "arm_remover")
@@ -256,16 +290,16 @@ def arm_job_jenkins(message):
         var = user_dict[chat_id]
         var.issue_id = issue_id
         if var.issue_select == "No":
-            params = {"stend": var.stend}
+            params = {"stand": var.stand}
         if var.issue_select == "Yes":
-            params = {"stend": var.stend, "issue_id": var.issue_id}
-        text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stend)
+            params = {"stand": var.stand, "issue_id": var.issue_id}
+        text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
-        text = "{} собирает {} на {}".format(name_user, var.arm, var.stend)
+        text = "{} собирает {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stend + " соберется (если ошибки в jenkins не будет).")
+        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется (если ошибки в jenkins не будет).")
         job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
         test_run(message, var.arm, params, 70, job)
     except Exception as e:
@@ -274,7 +308,7 @@ def arm_job_jenkins(message):
 ##### start
 
 @bot.message_handler(commands=['gistek_pentaho'])
-def action_select(message):
+def pentaho_action_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -307,9 +341,9 @@ def pentaho_app_select(message):
 def pentaho_app_2_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add("update_plugins", "update_fileProperties", "update_quixote_theme", "update_langpack", "update_cas_tek", "update_mondrian")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
@@ -394,13 +428,13 @@ def pentaho_job_jenkins(message):
         var.issue_id = issue_id
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
-            params = {"stend": var.stend, "tags": str(var.arm), "version": str(var.tag)}
+            params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
             if var.arm == "update_mondrian":
-                params = {"stend": var.stend, "tags": str(var.arm)}
+                params = {"stand": var.stand, "tags": str(var.arm)}
         if var.issue_select == "Yes":
-            params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
+            params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_mondrian":
-                params = {"stend": var.stend, "tags": str(var.arm), "issue_id": var.issue_id,}
+                params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id,}
         text = "{} cтучится в jenkins чтобы выполнить {} для Пентахи".format(name_user, var.arm)
         logging.warning( u"%s", text)
         jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
@@ -433,7 +467,7 @@ def pentaho_build_job_jenkins(message):
 ##### finish
 
 @bot.message_handler(commands=['gistek_portal'])
-def action_select(message):
+def portal_action_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -466,9 +500,9 @@ def portal_app_select(message):
 def portal_public_internal_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('public', 'internal')
         msg = bot.reply_to(message, "Открытая или закрытая часть портала?", reply_markup=markup)
@@ -617,17 +651,17 @@ def portal_job_jenkins(message):
         issue_id = message.text
         var = user_dict[chat_id]
         var.issue_id = issue_id
-        text = "{} cтучится в jenkins чтобы обновить {} на портале {} в {}".format(name_user, var.arm, var.stend, var.open_close)
+        text = "{} cтучится в jenkins чтобы обновить {} на портале {} в {}".format(name_user, var.arm, var.stand, var.open_close)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
-            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
+            params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
         if var.issue_select == "Yes":
-            params = {"stend": var.stend, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
+            params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
         jenkins.build_job('GISTEK_Portal/Update_App', params)
-        text = "{} на портале {} обновляет {}".format(name_user, var.stend, var.arm)
+        text = "{} на портале {} обновляет {}".format(name_user, var.stand, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stend) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Portal/Update_App')
         test_run(message, var.arm, params, 180, job)
     except Exception as e:
@@ -652,15 +686,15 @@ def portal_build_job_jenkins(message):
         errors(message)
 
 @bot.message_handler(commands=['gistek_mobile'])
-def action_select(message):
+def mobile_action_select(message):
     global name_user
     name_user = "{}({}):".format(message.chat.username, message.chat.id)
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
     markup.add('Build', 'Deploy')
     msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, mobile_action_select)
+    bot.register_next_step_handler(msg, mobile_action_select_2)
 
-def mobile_action_select(message):
+def mobile_action_select_2(message):
     try:
         chat_id = message.chat.id
         build_deloy = message.text
@@ -701,9 +735,9 @@ def mobile_job_build_jenkins(message):
 def mobile_app_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add("update_web_service", "update_portlet")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
@@ -740,7 +774,7 @@ def mobile_job_jenkins(message):
         tag = message.text
         var = user_dict[chat_id]
         var.tag = tag
-        params = {"stand": var.stend, "tags": str(var.arm), "version": str(var.tag)}
+        params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы обновить {} для мобильного приложения".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
@@ -754,7 +788,7 @@ def mobile_job_jenkins(message):
         errors(message)
 
 @bot.message_handler(commands=['gistek_integration'])
-def action_select(message):
+def integration_action_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -787,9 +821,9 @@ def integration_app_select(message):
 def integration_stand_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add("update", "update_generator", "update_logui")
         msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
@@ -800,9 +834,9 @@ def integration_stand_select(message):
 def integration_build_stand_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add("Build_mis", "Build_generator", "Build_LogUI")
         msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
@@ -874,7 +908,7 @@ def integration_build_job_jenkins(message):
         tag = message.text
         var = user_dict[chat_id]
         var.tag = tag
-        params = {"stand": var.stend, "version": str(var.tag)}
+        params = {"stand": var.stand, "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
@@ -893,7 +927,7 @@ def integration_job_jenkins(message):
         tag = message.text
         var = user_dict[chat_id]
         var.tag = tag
-        params = {"stand": var.stend, "tags": str(var.arm), "version": str(var.tag)}
+        params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
@@ -907,7 +941,7 @@ def integration_job_jenkins(message):
         errors(message)
 
 @bot.message_handler(commands=['gistek_pizi'])
-def action_select(message):
+def pizi_action_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -915,9 +949,9 @@ def action_select(message):
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('Build', 'Deploy')
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-        bot.register_next_step_handler(msg, pizi_stend_select)
+        bot.register_next_step_handler(msg, pizi_stand_select)
 
-def pizi_stend_select(message):
+def pizi_stand_select(message):
     try:
         chat_id = message.chat.id
         build_deloy = message.text
@@ -934,9 +968,9 @@ def pizi_stend_select(message):
 def pizi_app_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         if var.build_deloy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("App", "DB_change_script", "DB_refresh_db")
@@ -967,8 +1001,8 @@ def pizi_job_jenkins(message):
             job = jenkins.get_job('GISTEK_Pizi/Build_' + str(var.arm))
             test_run(message, var.arm, "Без оных", 185, job)
         if var.build_deloy == "Deploy":
-            params = {"stend": var.stend}
-            text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора на {}".format(name_user, var.arm, var.stend)
+            params = {"stand": var.stand}
+            text = "{} cтучится в jenkins чтобы собрать обновить {} для Сбора на {}".format(name_user, var.arm, var.stand)
             logging.warning( u"%s", text)
             jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
             text = "{} обновляет на Сборе {}".format(name_user, var.arm)
@@ -980,7 +1014,7 @@ def pizi_job_jenkins(message):
         errors(message)
 
 @bot.message_handler(commands=['gistek_poib'])
-def action_select(message):
+def poib_action_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -1018,9 +1052,9 @@ def poib_select(message):
 def poib_app_select(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
+        stand = message.text
         var = user_dict[chat_id]
-        var.stend = stend
+        var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add("Update_DB", "Update_App")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
@@ -1072,7 +1106,7 @@ def poib_job_jenkins(message):
         issue_id = message.text
         var = user_dict[chat_id]
         var.issue_id = issue_id
-        params = {"stend": var.stend, "version": str(var.tag)}
+        params = {"stand": var.stand, "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
@@ -1086,7 +1120,7 @@ def poib_job_jenkins(message):
         errors(message)
 
 @bot.message_handler(commands=['restart_system'])
-def action_select(message):
+def system_action_select(message):
     secure(message)
     if user_true == "true":
         global name_user
@@ -1094,16 +1128,16 @@ def action_select(message):
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('REA_TEST', 'PK', 'PI')
         msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
-        bot.register_next_step_handler(msg, system_select)
+        bot.register_next_step_handler(msg, system_select_restart)
 
-def system_select(message):
+def system_select_restart(message):
     try:
         chat_id = message.chat.id
-        stend = message.text
-        var = Var(stend)
+        stand = message.text
+        var = Var(stand)
         user_dict[chat_id] = var
-        var.stend = stend
-        # if var.stend == "PI":
+        var.stand = stand
+        # if var.stand == "PI":
         #     bot.send_message(message.chat.id, "")
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
@@ -1118,21 +1152,21 @@ def system_job_jenkins(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        params = {"stand": var.stend, "system": var.arm}
-        text = "{} cтучится в jenkins чтобы перезагрузить {} на {}".format(name_user, var.arm, var.stend)
+        params = {"stand": var.stand, "system": var.arm}
+        text = "{} cтучится в jenkins чтобы перезагрузить {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         jenkins.build_job('GISTEK_Restart', params)
-        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stend)
+        text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stend) + " перезапустится, (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stand) + " перезапустится, (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Restart')
         test_run(message, var.arm, params, 40, job)
     except Exception as e:
         errors(message)
 
 @bot.message_handler(commands=['dev_klochkov'])
-def action_select(message):
+def dev_action_select(message):
     secure_dev(message)
     if user_true == "true":
         global name_user
