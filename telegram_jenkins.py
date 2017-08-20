@@ -170,39 +170,39 @@ def handle_true_help(message):
     bot.register_next_step_handler(msg, system_select)
 
 def system_select(message):
-    # try:
-    chat_id = message.chat.id
-    stand = message.text
-    var = Var(stand)
-    user_dict[chat_id] = var
-    secure_dev(message)
-    if user_true == "true":
-        bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
-        authentication(0)
-        # bot.send_message(message.chat.id, "Успех. Делайте, то что нужно.")
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    text = "{} выбрал {}".format(name_user, var.stand)
-    logging.warning( u"%s", text)
-    if stand == "АРМ":
-        arm_stand_select(message)
-    if stand == "Пентаха":
-        pentaho_action_select(message)
-    if stand == "Портал":
-        portal_action_select(message)
-    if stand == "Мобильное приложение":
-        mobile_action_select(message)
-    if stand == "Интеграционная подсистема":
-        integration_action_select(message)
-    if stand == "Сбор":
-        pizi_action_select(message)
-    if stand == "ПОИБ":
-        poib_action_select(message)
-    if stand == "Перезапуск":
-        system_action_select(message)
-    if stand == "Синхронизация стендов":
-        sync_start(message)
-    # except Exception as e:
-    #     errors(message)
+    try:
+        chat_id = message.chat.id
+        stand = message.text
+        var = Var(stand)
+        user_dict[chat_id] = var
+        secure_dev(message)
+        if user_true == "true":
+            bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
+            authentication(0)
+            # bot.send_message(message.chat.id, "Успех. Делайте, то что нужно.")
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        text = "{} выбрал {}".format(name_user, var.stand)
+        logging.warning( u"%s", text)
+        if stand == "АРМ":
+            arm_stand_select(message)
+        if stand == "Пентаха":
+            pentaho_action_select(message)
+        if stand == "Портал":
+            portal_action_select(message)
+        if stand == "Мобильное приложение":
+            mobile_action_select(message)
+        if stand == "Интеграционная подсистема":
+            integration_action_select(message)
+        if stand == "Сбор":
+            pizi_action_select(message)
+        if stand == "ПОИБ":
+            poib_action_select(message)
+        if stand == "Перезапуск":
+            system_action_select(message)
+        if stand == "Синхронизация стендов":
+            sync_start(message)
+    except Exception as e:
+        errors(message)
 
 # джоба по синхронизации данных со стендов
 @bot.message_handler(commands=['sync'])
