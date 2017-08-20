@@ -144,42 +144,28 @@ def tag_gitlab(name_project):
 
 # инициализация и стартовое меню бота
 @bot.message_handler(commands=['help', 'start'])
-def handle_true_help(message):
+def menu_help(message):
     if message.text == "/start":
         text = "{}({}): инициализировался".format(message.chat.username, message.chat.id)
         logging.warning( u"%s", text)
     text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     id_user = message.chat.id
-#     bot.send_message(message.chat.id, """Что я умею!
-# ------------------------------------------
-# Сборка АРМ: \n/gistek_build_arm \n
-# Подсистема Пентахо: \n/gistek_pentaho \n
-# Подсистема Портал: \n/gistek_portal  \n
-# Подсистема мобильного приложения: \n/gistek_mobile \n
-# Подсистема интеграционная: \n/gistek_integration \n
-# Подсистема ПИЗИ: \n/gistek_pizi \n
-# Подсистема ПОИБ: \n/gistek_poib \n
-# Перезапуск подсистем \n/restart_system \n
-#
-# Синхронизация данных между стендами: \n/sync
-# ------------------------------------------""")
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
     markup.add("АРМ", "Пентаха", "Портал", "Мобильное приложение", "Интеграционная подсистема", "Сбор", "ПОИБ", "Перезапуск", "Синхронизация стендов")
     msg = bot.reply_to(message, "Главное меню, \nвыберите, что будем делать:", reply_markup=markup)
-    bot.register_next_step_handler(msg, system_select)
+    bot.register_next_step_handler(msg, menu_help_2)
 
-def system_select(message):
+def menu_help_2(message):
     try:
         chat_id = message.chat.id
         stand = message.text
         var = Var(stand)
         user_dict[chat_id] = var
-        secure_dev(message)
-        if user_true == "true":
-            bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
-            authentication(0)
-            # bot.send_message(message.chat.id, "Успех. Делайте, то что нужно.")
+        # secure_dev(message)
+        # if user_true == "true":
+        #     bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
+        #     authentication(0)
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         text = "{} выбрал {}".format(name_user, var.stand)
         logging.warning( u"%s", text)
@@ -212,25 +198,32 @@ def sync_start(message):
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp')
+        markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
         bot.register_next_step_handler(msg, sync_select)
 
 def sync_select(message):
-    try:
-        chat_id = message.chat.id
-        stand = message.text
-        var = Var(stand)
-        user_dict[chat_id] = var
-        text = "{} запускает {}".format(name_user, var.stand)
-        logging.warning( u"%s", text)
-        jenkins_dkp.build_job(str(var.stand))
-    except Exception as e:
-        text = "{} неведомая херня, но джоба выполняется, прячу багу".format(name_user)
-        logging.warning( u"%s", text)
-    text = "{} запустилась {}".format(name_user, var.stand)
-    logging.warning( u"%s", text)
-    bot.send_message(message.chat.id, "Запустилась синхронизация, в среднем выполняется 45 минут. Можно продолжать работу.")
+        try:
+            chat_id = message.chat.id
+            stand = message.text
+            var = Var(stand)
+            user_dict[chat_id] = var
+            var.stand = stand
+            if var.stand == "Назад в главное меню":
+                menu_help(message)
+            else:
+                text = "{} запускает {}".format(name_user, var.stand)
+                logging.warning( u"%s", text)
+                try:
+                    jenkins_dkp.build_job(str(var.stand))
+                except Exception as e:
+                    text = "{} неведомая херня, но джоба выполняется, прячу багу".format(name_user)
+                    logging.warning( u"%s", text)
+                text = "{} запустилась {}".format(name_user, var.stand)
+                logging.warning( u"%s", text)
+                bot.send_message(message.chat.id, "Запустилась синхронизация, в среднем выполняется 45 минут. Можно продолжать работу.")
+        except Exception as e:
+            errors(message)
 
 @bot.message_handler(commands=['gistek_build_arm'])
 def arm_stand_select(message):
@@ -238,9 +231,9 @@ def arm_stand_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('REA_TEST', 'PK', 'PI')
-        msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+        markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
+        markup.add('REA_TEST', 'PK', 'PI', "Назад в главное меню")
+        msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
         bot.register_next_step_handler(msg, arm_select)
 
 def arm_select(message):
@@ -249,10 +242,14 @@ def arm_select(message):
         stand = message.text
         var = Var(stand)
         user_dict[chat_id] = var
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("admin_kl", "admin_net", "all_mak_inf", "arm_access", "fpi-autoregistration", "gis_des", "is_transport", "kontrol", "load_ssb", "offline", "template_cleaner", "wmk_gistek", "arm_remover")
-        msg = bot.reply_to(message, "Выберите АРМ", reply_markup=markup)
-        bot.register_next_step_handler(msg, arm_issue_select)
+        var.stand = stand
+        if stand == "Назад в главное меню":
+            menu_help(message)
+        else:
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add("admin_kl", "admin_net", "all_mak_inf", "arm_access", "fpi-autoregistration", "gis_des", "is_transport", "kontrol", "load_ssb", "offline", "template_cleaner", "wmk_gistek", "arm_remover")
+            msg = bot.reply_to(message, "Выберите АРМ:", reply_markup=markup)
+            bot.register_next_step_handler(msg, arm_issue_select)
     except Exception as e:
         errors(message)
 
@@ -313,8 +310,8 @@ def pentaho_action_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('Build', 'Deploy')
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
         bot.register_next_step_handler(msg, pentaho_app_select)
 
@@ -335,6 +332,8 @@ def pentaho_app_select(message):
             markup.add('REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_app_2_select)
+        if var.build_deloy == "Назад в главное меню":
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -472,8 +471,8 @@ def portal_action_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('Build', 'Deploy')
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_app_select)
 
@@ -494,6 +493,8 @@ def portal_app_select(message):
             markup.add('REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_public_internal_select)
+        if var.build_deloy == "Назад в главное меню":
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -689,8 +690,8 @@ def portal_build_job_jenkins(message):
 def mobile_action_select(message):
     global name_user
     name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('Build', 'Deploy')
+    markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+    markup.add('Build', 'Deploy', "Назад в главное меню")
     msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
     bot.register_next_step_handler(msg, mobile_action_select_2)
 
@@ -711,6 +712,8 @@ def mobile_action_select_2(message):
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_app_select)
+        if var.build_deloy == "Назад в главное меню":
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -793,8 +796,8 @@ def integration_action_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('Build', 'Deploy')
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
         bot.register_next_step_handler(msg, integration_app_select)
 
@@ -815,6 +818,8 @@ def integration_app_select(message):
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_stand_select)
+        if var.build_deloy == "Назад в главное меню":
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -946,8 +951,8 @@ def pizi_action_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('Build', 'Deploy')
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
         bot.register_next_step_handler(msg, pizi_stand_select)
 
@@ -958,10 +963,13 @@ def pizi_stand_select(message):
         var = Var(build_deloy)
         user_dict[chat_id] = var
         var.build_deloy = build_deloy
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('REA_TEST', 'PK', 'PI')
-        msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
-        bot.register_next_step_handler(msg, pizi_app_select)
+        if var.build_deloy == "Назад в главное меню":
+            menu_help(message)
+        else:
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add('REA_TEST', 'PK', 'PI')
+            msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
+            bot.register_next_step_handler(msg, pizi_app_select)
     except Exception as e:
         errors(message)
 
@@ -1019,8 +1027,8 @@ def poib_action_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('Build', 'Deploy')
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
         bot.register_next_step_handler(msg, poib_select)
 
@@ -1046,6 +1054,8 @@ def poib_select(message):
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, poib_app_select)
+        if var.build_deloy == "Назад в главное меню":
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -1125,8 +1135,8 @@ def system_action_select(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('REA_TEST', 'PK', 'PI')
+        markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
+        markup.add('REA_TEST', 'PK', 'PI', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
         bot.register_next_step_handler(msg, system_select_restart)
 
@@ -1139,10 +1149,13 @@ def system_select_restart(message):
         var.stand = stand
         # if var.stand == "PI":
         #     bot.send_message(message.chat.id, "")
-        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
-        msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
-        bot.register_next_step_handler(msg, system_job_jenkins)
+        if var.stand == "Назад в главное меню":
+            menu_help(message)
+        else:
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
+            msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
+            bot.register_next_step_handler(msg, system_job_jenkins)
     except Exception as e:
         errors(message)
 
