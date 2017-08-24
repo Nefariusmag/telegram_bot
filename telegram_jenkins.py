@@ -41,8 +41,8 @@ def authentication(arg):
         try:
             global jenkins
             global jenkins_dkp
-            jenkins = Jenkins("http://jenkins.gistek.lanit.ru", username=config.username, password=config.password)
-            jenkins_dkp = Jenkins("http://jenkins-gistek.dkp.lanit.ru", username=config.username, password=config.password)
+            jenkins = Jenkins(config.url-jenkins, username=config.username, password=config.password)
+            jenkins_dkp = Jenkins(config.url-jenkins2, username=config.username, password=config.password)
             logging.warning(u'В jenkins авторизовались')
             i = 1
         except Exception as e:

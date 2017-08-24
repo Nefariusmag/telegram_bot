@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-token = '357145828:AAEKuo0euMlBGQvUZNLiicj5823mMxPoTuQ'
-token_gitlab = 'useP5Y56z9-4j5XE6rDX'
-username = "jenkins-service"
-password = "jenkins-service123jenkins-service"
+url-jenkins = "http://jenkins.gistek.lanit.ru"
+url-jenkins2 = "http://jenkins-gistek.dkp.lanit.ru"
+token = '<token-telegram>'
+token_gitlab = 'token-gitlab'
+username = "user-jenkins"
+password = "pass-jenkins"
 true_id = [121860960, 190766771, -216046302]
 true_id_dev = [220231673, 186798826, 26018251, 121860960, 190766771, -216046302]
 # -216046302 - чат DevOps
