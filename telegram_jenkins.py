@@ -41,8 +41,8 @@ def authentication(arg):
         try:
             global jenkins
             global jenkins_dkp
-            jenkins = Jenkins(config.url-jenkins, username=config.username, password=config.password)
-            jenkins_dkp = Jenkins(config.url-jenkins2, username=config.username, password=config.password)
+            jenkins = Jenkins(config.url_jenkins, username=config.username, password=config.password)
+            jenkins_dkp = Jenkins(config.url_jenkins2, username=config.username, password=config.password)
             logging.warning(u'В jenkins авторизовались')
             i = 1
         except Exception as e:
@@ -59,7 +59,7 @@ class Var:
         self.stand = name
         self.arm = None
         self.issue_select = None
-        self.issue_id = None
+        self.issue_id = "отсутствует"
         self.tag = None
         self.open_close = None
 
@@ -67,11 +67,11 @@ class Var:
 def secure(message):
     global user_true
     if message.chat.id in config.true_id:
-        text = "Пользователь {} прошел проверку безопасности".format(message.chat.id)
+        text = "{}({}): прошел проверку безопасности".format(message.chat.username, message.chat.id)
         logging.warning( u"%s", text)
         user_true = "true"
     else:
-        text = "Пользователь {} не прошел проверку безопасности".format(message.chat.id)
+        text = "{}({}): не прошел проверку безопасности".format(message.chat.username, message.chat.id)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
         user_true = "false"
@@ -80,11 +80,11 @@ def secure(message):
 def secure_dev(message):
     global user_true
     if message.chat.id in config.true_id_dev:
-        text = "Пользователь {} прошел проверку безопасности".format(message.chat.id)
+        text = "{}({}): прошел проверку безопасности".format(message.chat.username, message.chat.id)
         logging.warning( u"%s", text)
         user_true = "true"
     else:
-        text = "Пользователь {} не прошел проверку безопасности".format(message.chat.id)
+        text = "{}({}): не прошел проверку безопасности".format(message.chat.username, message.chat.id)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "Соррян, у вас нету нужных прав.")
         user_true = "false"
@@ -151,8 +151,8 @@ def menu_help(message):
     text = "{}({}): решил почитать /help".format(message.chat.username, message.chat.id)
     logging.warning( u"%s", text)
     id_user = message.chat.id
-    markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
-    markup.add("АРМ", "Пентаха", "Портал", "Мобильное приложение", "Интеграционная подсистема", "Сбор", "ПОИБ", "Перезапуск", "Синхронизация стендов")
+    markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+    markup.add("АРМ", "Пентаха", "Портал", "Мобильное приложение", "Интеграционная подсистема", "Сбор", "ПОИБ", "Перезапуск", "Синхронизация стендов", "Переподключиться")
     msg = bot.reply_to(message, "Главное меню, \nвыберите, что будем делать:", reply_markup=markup)
     bot.register_next_step_handler(msg, menu_help_2)
 
@@ -162,12 +162,8 @@ def menu_help_2(message):
         stand = message.text
         var = Var(stand)
         user_dict[chat_id] = var
-        # secure_dev(message)
-        # if user_true == "true":
-        #     bot.send_message(message.chat.id, "Авторизуюсь в jenkins. Подождите, это для вашего же блага.")
-        #     authentication(0)
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        text = "{} выбрал {}".format(name_user, var.stand)
+        text = "{} выбрал: {}".format(name_user, var.stand)
         logging.warning( u"%s", text)
         if stand == "АРМ":
             arm_stand_select(message)
@@ -187,6 +183,10 @@ def menu_help_2(message):
             system_action_select(message)
         if stand == "Синхронизация стендов":
             sync_start(message)
+        if stand == "Переподключиться":
+            authentication(0)
+            bot.send_message(chat_id, "Переподключение к jenkins выполнено.")
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -273,32 +273,48 @@ def arm_issue(message):
         var = user_dict[chat_id]
         var.issue_select = issue_select
         if var.issue_select == "No":
-            arm_job_jenkins(message)
+            arm_ask(message)
         if var.issue_select == "Yes":
             msg = bot.reply_to(message, "Введите номер:")
-            bot.register_next_step_handler(msg, arm_job_jenkins)
+            bot.register_next_step_handler(msg, arm_ask)
     except Exception as e:
         errors(message)
 
-def arm_job_jenkins(message):
+def arm_ask(message):
     try:
         chat_id = message.chat.id
         issue_id = message.text
         var = user_dict[chat_id]
         var.issue_id = issue_id
-        if var.issue_select == "No":
-            params = {"stand": var.stand}
-        if var.issue_select == "Yes":
-            params = {"stand": var.stand, "issue_id": var.issue_id}
-        text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stand)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
-        text = "{} собирает {} на {}".format(name_user, var.arm, var.stand)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется (если ошибки в jenkins не будет).")
-        job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
-        test_run(message, var.arm, params, 70, job)
+        markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
+        markup.add("Да", "Начать с начала", "Вернуться в главное меню")
+        text = "Сбрать {} для {} № задачи {}".format(var.arm, var.stand, var.issue_id)
+        msg = bot.reply_to(message, text, reply_markup=markup)
+        bot.register_next_step_handler(msg, arm_job_jenkins)
+    except Exception as e:
+        errors(message)
+
+def arm_job_jenkins(message):
+    try:
+        areyousure = message.text
+        if areyousure == "Начать с начала":
+            arm_stand_select(message)
+        if areyousure == "Вернуться в главное меню":
+            menu_help(message)
+        if areyousure == "Да":
+            if var.issue_select == "No":
+                params = {"stand": var.stand}
+            if var.issue_select == "Yes":
+                params = {"stand": var.stand, "issue_id": var.issue_id}
+            text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stand)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+            jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+            text = "{} собирает {} на {}".format(name_user, var.arm, var.stand)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется (если ошибки в jenkins не будет).")
+            job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
+            test_run(message, var.arm, params, 70, job)
     except Exception as e:
         errors(message)
 
