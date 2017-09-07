@@ -736,12 +736,14 @@ def portal_build_job_jenkins(message):
 
 @bot.message_handler(commands=['gistek_mobile'])
 def mobile_action_select(message):
-    global name_user
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
-    markup.add('Build', 'Deploy', "Назад в главное меню")
-    msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
-    bot.register_next_step_handler(msg, mobile_action_select_2)
+    secure(message)
+    if user_true == "true":
+        global name_user
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Назад в главное меню")
+        msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
+        bot.register_next_step_handler(msg, mobile_action_select_2)
 
 def mobile_action_select_2(message):
     try:
@@ -1000,6 +1002,8 @@ def integration_job_jenkins(message):
 # принимает сообщения от начальника на деплой
 @bot.message_handler(func=lambda message: re.search(r"infostream |registration |infostreamonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
 def pizi_repost_build_deploy(message):
+    secure(message)
+    if user_true == "true":
     try:
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         try:
