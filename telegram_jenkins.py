@@ -13,9 +13,7 @@ def lock_file(fname):
 
 lock = lock_file('telegram_jenkins.py')
 
-import time
-import os
-import random
+import time, os, random, re
 
 import jenkinsapi
 from jenkinsapi.jenkins import Jenkins
@@ -79,6 +77,18 @@ class Var:
         self.sso_server = "release"
         self.registration = "release"
         self.loadssb = "release"
+
+# функция подстановки версии переменным
+def version_for_pizi(message, arm_jenkins, arm_git):
+    arm_search = "{} .*".format(arm_git)
+    search_version = re.search(arm_search, message.text)
+    if search_version != None:
+        select_version = search_version.group(0).split(" ")[1]
+        if select_version == "-": # проверка на внезапные тире
+            select_version = search_version.group(0).split(" ")[2]
+        exec('%s = "%s"' % (str(arm_jenkins),str(select_version)), globals())
+    else:
+        exec('%s = "release"' % (str(arm_jenkins)), globals())
 
 # функция проверки доступа пользователя
 def secure(message):
@@ -332,6 +342,7 @@ def arm_job_jenkins(message):
             bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется (если ошибки в jenkins не будет).")
             job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
             test_run(message, var.arm, params, 70, job)
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -475,6 +486,7 @@ def pentaho_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
         test_run(message, var.arm, params, 70, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -493,6 +505,7 @@ def pentaho_build_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 4 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Pentaho/Build_' + str(var.arm))
         test_run(message, var.arm, "Без этого", 240, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -698,6 +711,7 @@ def portal_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Portal/Update_App')
         test_run(message, var.arm, params, 180, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -716,6 +730,7 @@ def portal_build_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 3 минуты (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Portal/' + str(var.arm))
         test_run(message, var.arm, "Без оных", 180, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -765,6 +780,7 @@ def mobile_job_build_jenkins(message):
         bot.send_message(message.chat.id, "..еще 4 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_MobileApp/Build_' + str(var.arm))
         test_run(message, var.arm, "Без оных", 200, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -820,6 +836,7 @@ def mobile_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_MobileApp/Update')
         test_run(message, var.arm, params, 120, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -956,6 +973,7 @@ def integration_build_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Integration/' + str(var.arm))
         test_run(message, var.arm, params, 180, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -975,6 +993,61 @@ def integration_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Integration/Update')
         test_run(message, var.arm, params, 300, job)
+        menu_help(message)
+    except Exception as e:
+        errors(message)
+
+# принимает сообщения от начальника на деплой
+@bot.message_handler(func=lambda message: re.search(r"infostream |registration |infostreamonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
+def pizi_repost_build_deploy(message):
+    try:
+        name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        try:
+            from_whom = str(message.forward_from.id)
+        except Exception as e:
+            bot.send_message(message.chat.id, "Это не репост от Федорова!")
+            from_whom = str(message.chat.id)
+        if from_whom == "238305929": # Босс ли?
+            # выбор версии приложения
+            version_for_pizi(message, "gtafo", "afo")
+            version_for_pizi(message, "gtarm", "infostream")
+            version_for_pizi(message, "gttechnologist", "infostream")
+            version_for_pizi(message, "gtonl", "infostreamonline")
+            version_for_pizi(message, "gtimpxml", "gtimpxml")
+            version_for_pizi(message, "gtxml", "gtxml")
+            version_for_pizi(message, "gttransport", "transport")
+            version_for_pizi(message, "gtcontrol", "gtcontrol")
+            version_for_pizi(message, "gtexpgisee", "gtexpgisee")
+            version_for_pizi(message, "gtdownload", "gtdownload")
+            version_for_pizi(message, "gtclassifier", "gtclassifier")
+            version_for_pizi(message, "classifier_view", "classifier-view")
+            version_for_pizi(message, "ticket", "ticket")
+            version_for_pizi(message, "sso_server", "sso_server")
+            version_for_pizi(message, "registration", "registration")
+            version_for_pizi(message, "loadssb", "loadssb")
+            # выбор стенда
+            version = re.search("на ПИ", message.text)
+            if version != None:
+                stand = "PI"
+                text = "На прод деплоим \n---------------- \ngtafo версии - {} \ngtarm версии - {} \ngttechnologist версии - {} \ngtonl версии - {} \ngtimpxml версии - {} \ngtxml версии - {} \ngttransport версии - {} \ngtcontrol версии - {} \ngtexpgisee версии - {} \ngtdownload версии - {} \ngtclassifier версии - {} \nclassifier_view версии - {} \nticket версии - {} \nsso-server версии - {} \nregistration версии - {} \nloadssb версии - {} \n----------------".format(gtafo, gtarm, gttechnologist, gtonl, gtimpxml, gtxml, gttransport, gtcontrol, gtexpgisee, gtdownload, gtclassifier, classifier_view, ticket, sso_server, registration, loadssb)
+                bot.send_message(message.chat.id, text)
+                bot.send_message(message.chat.id, "Есть 15 секунд на подумать, отмена через jenkins")
+                time.sleep(15)
+            else:
+                stand = "REA_TEST"
+            bot.send_message(message.chat.id, "Cходи, завари чайку пока этот сбор деплоится))")
+            params = {"TAG_GTAFO": gtafo, "TAG_GTARM": gtarm, "TAG_GTTECHNOLOGIST": gttechnologist, "TAG_GTONL": gtonl, "TAG_GTIMPXML": gtimpxml, "TAG_GTXML": gtxml, "TAG_GTTRANSPORT": gttransport, "TAG_GTCONTROL": gtcontrol, "TAG_GTEXPGISEE": gtexpgisee, 	"TAG_GTDOWNLOAD": gtdownload, "TAG_GTCLASSIFIER": gtclassifier, "TAG_CLASSIFIER_VIEW": classifier_view, "TAG_TICKET": ticket, "TAG_SSO_SERVER": sso_server, "TAG_REGISTRATION": registration, "TAG_LOADSSB": loadssb, "stand": stand}
+            text = "{} cтучится в jenkins чтобы обновить приложения Сбора".format(name_user)
+            logging.warning( u"%s", text)
+            jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+            text = "{} собирает приложения для Сбора".format(name_user)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "..еще 7 минут и обновим приложения Сбора")
+            job = jenkins.get_job('GISTEK_Pizi/Build_and_Deploy')
+            test_run(message, "Build_and_Deploy", params, 420, job)
+            menu_help(message)
+        else:
+            bot.send_message(message.chat.id, "Нету апрува от начальника, в другой раз.")
     except Exception as e:
         errors(message)
 
@@ -1043,6 +1116,7 @@ def pizi_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Pizi/Update_' + str(var.arm))
         test_run(message, var.arm, params, 120, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -1068,6 +1142,7 @@ def pizi_build_job_jenkins(message):
             bot.send_message(message.chat.id, "..еще минута и " + str(var.arm) + " для Cбора соберется (если ошибки в jenkins не будет)")
             job = jenkins.get_job('GISTEK_Pizi/Build_' + str(var.arm))
             test_run(message, var.arm, "Без оных", 55, job)
+            menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -1089,6 +1164,7 @@ def pizi_build_job_jenkins_2(message):
             bot.send_message(message.chat.id, "..еще 3 минуты и соберем приложения для Сбора (если ошибки в jenkins не будет)")
             job = jenkins.get_job('GISTEK_Pizi/Build_App')
             test_run(message, "Build_App", params, 185, job)
+            menu_help(message)
         # if areyousure == "Изменить версии":
         else:
             markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
@@ -1187,6 +1263,7 @@ def poib_select(message):
             bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется (если ошибки в jenkins не будет)")
             job = jenkins.get_job('GISTEK_Poib/Build')
             test_run(message, "перезапуск ПОИБ", "без параметров", 65, job)
+            menu_help(message)
         if var.build_deloy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
@@ -1264,6 +1341,7 @@ def poib_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Poib/' + str(var.arm))
         test_run(message, var.arm, params, 120, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -1313,6 +1391,7 @@ def system_job_jenkins(message):
         bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stand) + " перезапустится, (если ошибки в jenkins не будет)")
         job = jenkins.get_job('GISTEK_Restart')
         test_run(message, var.arm, params, 40, job)
+        menu_help(message)
     except Exception as e:
         errors(message)
 
@@ -1345,6 +1424,7 @@ def dev_select(message):
             bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится, (если ошибки в jenkins не будет)")
             job = jenkins.get_job('GISTEK_Restart')
             test_run(message, "Без оных", params, 70, job)
+            menu_help(message)
         if var.build_deloy == "deploy":
             tag_gitlab("PENTAHO/pentaho-fileProperties")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
