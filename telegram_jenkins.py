@@ -239,7 +239,9 @@ def sync_select(message):
             if var.stand == "Назад в главное меню":
                 menu_help(message)
             else:
-                text = "{} запускает {}".format(name_user, var.stand)
+                # специально для Юры и его лени
+                jenkins_dkp = Jenkins(config.url_jenkins2, username=config.username, password=config.password)
+                text = "Авторизация в jenkins_dkp прошла и теперь {} запускает {}".format(name_user, var.stand)
                 logging.warning( u"%s", text)
                 try:
                     jenkins_dkp.build_job(str(var.stand))
