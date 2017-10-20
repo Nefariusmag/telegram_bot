@@ -29,7 +29,7 @@ from telebot import types
 bot = telebot.TeleBot(config.token)
 
 import gitlab
-gl = gitlab.Gitlab('http://git.gistek.lanit.ru', config.token_gitlab)
+gl = gitlab.Gitlab(config.url_gitlab, config.token_gitlab)
 gl.auth()
 
 # авторизация в jenkins'ах (зацикленаня, чтобы точно выполнилась)
@@ -317,7 +317,7 @@ def arm_ask(message):
         var.issue_id = issue_id
         markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
         markup.add("Да", "Начать с начала", "Вернуться в главное меню")
-        text = "Сбрать {} для {} № задачи {}".format(var.arm, var.stand, var.issue_id)
+        text = "Собрать {} для {} № задачи {}".format(var.arm, var.stand, var.issue_id)
         msg = bot.reply_to(message, text, reply_markup=markup)
         bot.register_next_step_handler(msg, arm_job_jenkins)
     except Exception as e:
@@ -566,7 +566,7 @@ def portal_app_2_select(message):
         var = user_dict[chat_id]
         var.open_close = open_close
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme")
+        markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme", "lar_int", "lar_public", "lar_int_pub", "sync")
         msg = bot.reply_to(message, "Выберите какой портлет будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_tag_select)
     except Exception as e:
@@ -662,6 +662,10 @@ def portal_tag_select(message):
             markup.add(item1, item2, item3, item4, item5, item6)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_issue_select)
+        if var.arm == "lar_int" or var.arm == "lar_int_pub" or var.arm == "lar_public":
+            msg = bot.reply_to(message, "Введите номер версии (тег):")
+            bot.register_next_step_handler(msg, portal_issue_select)
+
         # msg = bot.reply_to(message, "Введите номер версии (тег):")
         # bot.register_next_step_handler(msg, portal_issue_select)
     except Exception as e:
@@ -687,9 +691,23 @@ def portal_issue(message):
         var = user_dict[chat_id]
         var.issue_select = issue_select
         if var.issue_select == "No":
-            portal_job_jenkins(message)
+            portal_ask(message)
         if var.issue_select == "Yes":
             msg = bot.reply_to(message, "Введите номер:")
+        bot.register_next_step_handler(msg, portal_ask)
+    except Exception as e:
+        errors(message)
+
+def portal_ask(message):
+    try:
+        chat_id = message.chat.id
+        issue_id = message.text
+        var = user_dict[chat_id]
+        var.issue_id = issue_id
+        markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
+        markup.add("Да", "Начать с начала", "Вернуться в главное меню")
+        text = "Обновить {} до версии {} на {} части на стенде {} № задачи: {}".format(var.arm, var.tag, var.open_close, var.stand, var.issue_id)
+        msg = bot.reply_to(message, text, reply_markup=markup)
         bot.register_next_step_handler(msg, portal_job_jenkins)
     except Exception as e:
         errors(message)
@@ -697,23 +715,27 @@ def portal_issue(message):
 def portal_job_jenkins(message):
     try:
         chat_id = message.chat.id
-        issue_id = message.text
         var = user_dict[chat_id]
-        var.issue_id = issue_id
-        text = "{} cтучится в jenkins чтобы обновить {} на портале {} в {}".format(name_user, var.arm, var.stand, var.open_close)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        if var.issue_select == "No":
-            params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
-        if var.issue_select == "Yes":
-            params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-        jenkins.build_job('GISTEK_Portal/Update_App', params)
-        text = "{} на портале {} обновляет {}".format(name_user, var.stand, var.arm)
-        logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
-        job = jenkins.get_job('GISTEK_Portal/Update_App')
-        test_run(message, var.arm, params, 180, job)
-        menu_help(message)
+        areyousure = message.text
+        if areyousure == "Начать с начала":
+            portal_action_select(message)
+        if areyousure == "Вернуться в главное меню":
+            menu_help(message)
+        if areyousure == "Да":
+            text = "{} cтучится в jenkins чтобы обновить {} на портале {} в {}".format(name_user, var.arm, var.stand, var.open_close)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "пыжимся и тужимся... ")
+            if var.issue_select == "No":
+                params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
+            if var.issue_select == "Yes":
+                params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
+            jenkins.build_job('GISTEK_Portal/Update_App', params)
+            text = "{} на портале {} обновляет {}".format(name_user, var.stand, var.arm)
+            logging.warning( u"%s", text)
+            bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+            job = jenkins.get_job('GISTEK_Portal/Update_App')
+            test_run(message, var.arm, params, 180, job)
+            menu_help(message)
     except Exception as e:
         errors(message)
 
