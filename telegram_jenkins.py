@@ -325,6 +325,8 @@ def arm_ask(message):
 
 def arm_job_jenkins(message):
     try:
+        chat_id = message.chat.id
+        var = user_dict[chat_id]
         areyousure = message.text
         if areyousure == "Начать с начала":
             arm_stand_select(message)
