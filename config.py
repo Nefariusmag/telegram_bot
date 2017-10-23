@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
-url-jenkins = "http://jenkins.ru"
-url-jenkins2 = "http://jenkins-2.ru"
+url_jenkins = "http://jenkins.ru"
+url_jenkins2 = "http://jenkins-2.ru"
 username = "user-jenkins"
 password = "pass-jenkins"
 token = '<token-telegram>'
