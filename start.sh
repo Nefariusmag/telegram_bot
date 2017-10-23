@@ -1,15 +1,12 @@
 # !/bin/bash
 
 status=$1
-if [ -z "$status" ]; then
-	status="what"
-fi
 
 if [ "$status" == "install" ]; then
 		# apt-get install python3 python-setuptools python3-pip
-		dnf -y install python3 python-setuptools python3-pip procmail
-		pip3 install pyTelegramBotAPI jenkinsapi python-gitlab
-		pip install logging
+		sudo dnf -y install python3 python-setuptools python3-pip procmail
+		sudo pip3 install pyTelegramBotAPI jenkinsapi python-gitlab
+		sudo pip install logging
 elif [ "$status" == "start" ]; then
     lockfile -r 0 file.lock || exit 1
     ./telegram_jenkins.py &
@@ -23,7 +20,11 @@ elif [ "$status" == "start" ]; then
 elif [ "$status" == "stop" ]; then
     	kill -9 $(ps aux | grep -v grep | grep telegram_jenkins.py | awk '{print($2)}')
 
-elif [ "$status" == "what" ]; then
+elif [ -z "$status" -o "$status" != "install" -o "$status" != "start" -o "$status" != "stop" ]; then
+	status="what"
+fi
+
+if [ "$status" == "what" ]; then
     echo "Запусти с параметром: install \ start \ stop"
 
 fi
