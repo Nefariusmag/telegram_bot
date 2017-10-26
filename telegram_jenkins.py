@@ -118,10 +118,9 @@ def secure_dev(message):
 
 # функция сообщения об ошибке
 def errors(message):
-    text = "Ошибочка вышла, скорее всего с авторизацией в jenkins, ну или с параметрами."
+    text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
     logging.error( u"%s", text)
-    authentication(0)
-    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал.')
+    bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
 
 # функция проверки на выполенния джобы в jenkins
 def test_run(message, arm, params, time_timeout, job):
@@ -132,9 +131,10 @@ def test_run(message, arm, params, time_timeout, job):
     s = str(job.get_last_completed_build())
     #  обрезка лишних символов
     s = int(s[s.find('#')+1:])
+    # получение статуса задачи
     build = job.get_build(s)
-    # получение статуса задачи true\false
     task_status = str(build.is_good())
+    # сравнение статуса с true\false
     if task_status == "True":
         text = "Я сам в шоке, но {} готово!".format(job)
         bot.send_message(message.chat.id, text)
@@ -340,14 +340,19 @@ def arm_job_jenkins(message):
             text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stand)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-            jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+            try:
+                jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
             text = "{} собирает {} на {}".format(name_user, var.arm, var.stand)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется (если ошибки в jenkins не будет).")
             job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
             test_run(message, var.arm, params, 70, job)
             menu_help(message)
-    except Exception as e:
+    except Exception:
         errors(message)
 
 ##### start
@@ -484,7 +489,12 @@ def pentaho_job_jenkins(message):
                 params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id,}
         text = "{} cтучится в jenkins чтобы выполнить {} для Пентахи".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
         text = "{} на пентахи выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
@@ -503,7 +513,12 @@ def pentaho_build_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать для пентахи  {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 4 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
@@ -731,7 +746,12 @@ def portal_job_jenkins(message):
                 params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.issue_select == "Yes":
                 params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            jenkins.build_job('GISTEK_Portal/Update_App', params)
+            try:
+                jenkins.build_job('GISTEK_Portal/Update_App', params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Portal/Update_App', params)
             text = "{} на портале {} обновляет {}".format(name_user, var.stand, var.arm)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
@@ -750,7 +770,12 @@ def portal_build_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать портлет  {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Portal/' + str(var.arm))
+        try:
+            jenkins.build_job('GISTEK_Portal/' + str(var.arm))
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Portal/' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 3 минуты (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
@@ -802,7 +827,12 @@ def mobile_job_build_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать приложение {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
+        try:
+            jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 4 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
@@ -858,7 +888,12 @@ def mobile_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы обновить {} для мобильного приложения".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_MobileApp/Update', params)
+        try:
+            jenkins.build_job('GISTEK_MobileApp/Update', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_MobileApp/Update', params)
         text = "{} для мобильного приложения выполняется {} тег {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
@@ -995,7 +1030,12 @@ def integration_build_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
+        try:
+            jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
         text = "{} собирает для интеграционной подсистемы {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет)")
@@ -1015,7 +1055,12 @@ def integration_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Integration/Update', params)
+        try:
+            jenkins.build_job('GISTEK_Integration/Update', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Integration/Update', params)
         text = "{} обновляет на интеграционной подсистеме {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет)")
@@ -1069,7 +1114,12 @@ def pizi_repost_build_deploy(message):
                 params = {"TAG_GTAFO": gtafo, "TAG_GTARM": gtarm, "TAG_GTTECHNOLOGIST": gttechnologist, "TAG_GTONL": gtonl, "TAG_GTIMPXML": gtimpxml, "TAG_GTXML": gtxml, "TAG_GTTRANSPORT": gttransport, "TAG_GTCONTROL": gtcontrol, "TAG_GTEXPGISEE": gtexpgisee, 	"TAG_GTDOWNLOAD": gtdownload, "TAG_GTCLASSIFIER": gtclassifier, "TAG_CLASSIFIER_VIEW": classifier_view, "TAG_TICKET": ticket, "TAG_SSO_SERVER": sso_server, "TAG_REGISTRATION": registration, "TAG_LOADSSB": loadssb, "stand": stand}
                 text = "{} cтучится в jenkins чтобы обновить приложения Сбора".format(name_user)
                 logging.warning( u"%s", text)
-                jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+                try:
+                    jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+                except Exception:
+                    bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                    authentication(0)
+                    jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
                 text = "{} собирает приложения для Сбора".format(name_user)
                 logging.warning( u"%s", text)
                 bot.send_message(message.chat.id, "..еще 7 минут и обновим приложения Сбора")
@@ -1140,7 +1190,12 @@ def pizi_job_jenkins(message):
         params = {"stand": var.stand}
         text = "{} cтучится в jenkins чтобы обновить {} для Сбора на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
-        jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
+        try:
+            jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
         text = "{} обновляет на Сборе {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет)")
@@ -1166,7 +1221,12 @@ def pizi_build_job_jenkins(message):
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
             text = "{} cтучится в jenkins чтобы собрать приложение {} для Сбора".format(name_user, var.arm)
             logging.warning( u"%s", text)
-            jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
+            try:
+                jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
             text = "{} собирает для сбора {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минута и " + str(var.arm) + " для Cбора соберется (если ошибки в jenkins не будет)")
@@ -1188,7 +1248,12 @@ def pizi_build_job_jenkins_2(message):
             params = {"TAG_GTAFO": var.gtafo, "TAG_GTARM": var.gtarm, "TAG_GTTECHNOLOGIST": var.gttechnologist, "TAG_GTONL": var.gtonl, "TAG_GTIMPXML": var.gtimpxml, "TAG_GTXML": var.gtxml, "TAG_GTTRANSPORT": var.gttransport, "TAG_GTCONTROL": var.gtcontrol, "TAG_GTEXPGISEE": var.gtexpgisee, 	"TAG_GTDOWNLOAD": var.gtdownload, "TAG_GTCLASSIFIER": var.gtclassifier, "TAG_CLASSIFIER_VIEW": var.classifier_view, "TAG_TICKET": var.ticket, "TAG_SSO_SERVER": var.sso_server, "TAG_REGISTRATION": var.registration, "TAG_LOADSSB": var.loadssb}
             text = "{} cтучится в jenkins чтобы собрать приложения для Сбора".format(name_user)
             logging.warning( u"%s", text)
-            jenkins.build_job('GISTEK_Pizi/Build_App', params)
+            try:
+                jenkins.build_job('GISTEK_Pizi/Build_App', params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Pizi/Build_App', params)
             text = "{} собирает приложения для Сбора".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще 3 минуты и соберем приложения для Сбора (если ошибки в jenkins не будет)")
@@ -1287,7 +1352,12 @@ def poib_select(message):
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
             text = "{} cтучится в jenkins чтобы собрать приложение для ПОИБ".format(name_user)
             logging.warning( u"%s", text)
-            jenkins.build_job('GISTEK_Poib/Build')
+            try:
+                jenkins.build_job('GISTEK_Poib/Build')
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Poib/Build')
             text = "{} собирает ПОИБ".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется (если ошибки в jenkins не будет)")
@@ -1365,7 +1435,12 @@ def poib_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
+        try:
+            jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
         text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
@@ -1415,7 +1490,12 @@ def system_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы перезагрузить {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Restart', params)
+        try:
+            jenkins.build_job('GISTEK_Restart', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Restart', params)
         text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stand) + " перезапустится, (если ошибки в jenkins не будет)")
@@ -1448,7 +1528,12 @@ def dev_select(message):
             text = "{} cтучится в jenkins чтобы перезагрузить pentaho на DEV".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-            jenkins.build_job('GISTEK_Restart', params)
+            try:
+                jenkins.build_job('GISTEK_Restart', params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Restart', params)
             text = "{} перезагружается pentaho на DEV".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится, (если ошибки в jenkins не будет)")
@@ -1476,7 +1561,12 @@ def dev_job(message):
         logging.warning( u"%s", text)
         params = {"version": var.tag}
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
         text = "{} собирает fileProperties".format(name_user)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 3 минуты и плагин fileProperties соберется (если ошибки в jenkins не будет)")
@@ -1485,7 +1575,12 @@ def dev_job(message):
         params = {"stand": "DEV", "tags": "fileProperties", "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы обновить fileProperties версии {} для пентахи на DEV".format(name_user, var.tag)
         logging.warning( u"%s", text)
-        jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
         text = "{} на Пентахах DEV обновляется fileProperties версия {}".format(name_user, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится до версии " + str(var.tag) + " (если ошибки в jenkins не будет)")
