@@ -1071,7 +1071,7 @@ def integration_job_jenkins(message):
         errors(message)
 
 # принимает сообщения от начальника на деплой
-@bot.message_handler(func=lambda message: re.search(r"infostream |monitor |registration |infostreamonline |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
+@bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
 def pizi_repost_build_deploy(message):
     secure(message)
     name_user = "{}({}):".format(message.chat.username, message.chat.id)
@@ -1085,11 +1085,11 @@ def pizi_repost_build_deploy(message):
             if from_whom == "238305929": # Босс ли?
                 # выбор версии приложения
                 version_for_pizi(message, "gtafo", "afo")
-                version_for_pizi(message, "gtarm", "infostream")
                 version_for_pizi(message, "gtarm", "monitor")
-                version_for_pizi(message, "gttechnologist", "infostream")
+                version_for_pizi(message, "gtarm", "monitor")
                 version_for_pizi(message, "gttechnologist", "monitor")
-                version_for_pizi(message, "gtonl", "infostreamonline")
+                version_for_pizi(message, "gttechnologist", "monitor")
+                version_for_pizi(message, "gtonl", "formfillonline")
                 version_for_pizi(message, "gtonl", "formfillonline")
                 version_for_pizi(message, "gtimpxml", "gtimpxml")
                 version_for_pizi(message, "gtxml", "gtxml")
@@ -1446,7 +1446,10 @@ def poib_job_jenkins(message):
         issue_id = message.text
         var = user_dict[chat_id]
         var.issue_id = issue_id
-        params = {"stand": var.stand, "version": str(var.tag)}
+        if var.issue_select == "No":
+            params = {"stand": var.stand, "version": str(var.tag)}
+        elif var.issue_select != "No":
+            params = {"stand": var.stand, "version": str(var.tag), "issue_id": str(var.issue_id)}
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
@@ -1617,4 +1620,10 @@ def dev_job(message):
 #     text = random.choice(lol.text)
 #     bot.send_message(message.chat.id, text)
 
-bot.polling(none_stop=True)
+while True:
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        text = "Ошибка соединения перелогиниваемся."
+        logging.warning( u"%s", text)
+        authentication(0)
