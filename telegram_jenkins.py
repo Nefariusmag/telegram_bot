@@ -53,7 +53,7 @@ user_dict = {}
 # класс для переменных что используют функции
 class Var:
     def __init__(self, name):
-        self.build_deloy = None
+        self.build_deploy = None
         self.stand = name
         self.arm = None
         self.issue_select = None
@@ -61,22 +61,22 @@ class Var:
         self.tag = None
         self.open_close = None
         # ПИЗИ
-        self.gtafo = "release"
-        self.gtarm = "release"
-        self.gttechnologist = "release"
-        self.gtonl = "release"
-        self.gtimpxml = "release"
-        self.gtxml = "release"
-        self.gttransport= "release"
-        self.gtcontrol = "release"
-        self.gtexpgisee = "release"
-        self.gtdownload = "release"
-        self.gtclassifier = "release"
-        self.classifier_view = "release"
-        self.ticket = "release"
-        self.sso_server = "release"
-        self.registration = "release"
-        self.loadssb = "release"
+        self.gtafo = "dev-turchinskiy-26639"
+        self.gtarm = "dev-turchinskiy-26639"
+        self.gttechnologist = "dev-turchinskiy-26639"
+        self.gtonl = "dev-brykov-25530"
+        self.gtimpxml = "dev-turchinskiy-26639"
+        self.gtxml = "dev-turchinskiy-26639"
+        self.gttransport= "dev-turchinskiy-26639"
+        self.gtcontrol = "dev-turchinskiy-26639"
+        self.gtexpgisee = "dev-turchinskiy-26639"
+        self.gtdownload = "dev-turchinskiy-26639"
+        self.gtclassifier = "dev-turchinskiy-26639"
+        self.classifier_view = "dev-turchinskiy-26639"
+        self.ticket = "dev-turchinskiy-26639"
+        self.sso_server = "dev-turchinskiy-26639"
+        self.registration = "dev-turchinskiy-26639"
+        self.loadssb = "dev-turchinskiy-26639"
 
 # функция подстановки версии переменным
 def version_for_pizi(message, arm_jenkins, arm_git):
@@ -118,10 +118,11 @@ def secure_dev(message):
 
 # функция сообщения об ошибке
 def errors(message):
-    text = "Ошибочка вышла, скорее всего с авторизацией в jenkins, ну или с параметрами."
+    text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
     logging.error( u"%s", text)
-    authentication(0)
-    bot.reply_to(message, 'Попробуй еще разок, возможно он просто устал.')
+    bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
+    text = "Ошибка при работе с ботом у {}".format(message.chat.id)
+    bot.send_message("-216046302", text)
 
 # функция проверки на выполенния джобы в jenkins
 def test_run(message, arm, params, time_timeout, job):
@@ -132,9 +133,10 @@ def test_run(message, arm, params, time_timeout, job):
     s = str(job.get_last_completed_build())
     #  обрезка лишних символов
     s = int(s[s.find('#')+1:])
+    # получение статуса задачи
     build = job.get_build(s)
-    # получение статуса задачи true\false
     task_status = str(build.is_good())
+    # сравнение статуса с true\false
     if task_status == "True":
         text = "Я сам в шоке, но {} готово!".format(job)
         bot.send_message(message.chat.id, text)
@@ -224,6 +226,8 @@ def sync_start(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        text = "{} решил синхронизировать стенды".format(name_user)
+        logging.warning( u"%s", text)
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
@@ -236,6 +240,8 @@ def sync_select(message):
             var = Var(stand)
             user_dict[chat_id] = var
             var.stand = stand
+            text = "{} синхронизирует {}".format(name_user, var.stand)
+            logging.warning( u"%s", text)
             if var.stand == "Назад в главное меню":
                 menu_help(message)
             else:
@@ -340,14 +346,19 @@ def arm_job_jenkins(message):
             text = "{} cтучится в jenkins чтобы собрать {} для {}".format(name_user, var.arm, var.stand)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-            jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+            try:
+                jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Pizi/Build_ARM/' + str(var.arm), params)
             text = "{} собирает {} на {}".format(name_user, var.arm, var.stand)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется (если ошибки в jenkins не будет).")
+            bot.send_message(message.chat.id, "..еще 2 минуты и " + str(var.arm) + ", для " + var.stand + " соберется.")
             job = jenkins.get_job('GISTEK_Pizi/Build_ARM/' + str(var.arm))
             test_run(message, var.arm, params, 70, job)
             menu_help(message)
-    except Exception as e:
+    except Exception:
         errors(message)
 
 ##### start
@@ -366,21 +377,21 @@ def pentaho_action_select(message):
 def pentaho_app_select(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "Build":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("fileProperties", "integr_clearcache", "integr_readmetadata", "langpack", "cas_tek", "plugins", "quixote_theme")
             msg = bot.reply_to(message, "Выберите плагин для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_build_job_jenkins)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_app_2_select)
-        if var.build_deloy == "Назад в главное меню":
+        if var.build_deploy == "Назад в главное меню":
             menu_help(message)
     except Exception as e:
         errors(message)
@@ -392,7 +403,7 @@ def pentaho_app_2_select(message):
         var = user_dict[chat_id]
         var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update_plugins", "update_fileProperties", "update_quixote_theme", "update_langpack", "update_cas_tek", "update_mondrian")
+        markup.add("plugins", "fileProperties", "quixote_theme", "langpack", "cas_tek", "mondrian")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, pentaho_tag_select)
     except Exception as e:
@@ -404,39 +415,40 @@ def pentaho_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        if var.arm == "update_plugins":
+        if var.arm == "plugins":
             tag_gitlab("PENTAHO/pentaho-plugins")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item3, item4, item5)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_fileProperties":
+        if var.arm == "fileProperties":
             tag_gitlab("PENTAHO/pentaho-fileProperties")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_quixote_theme":
+        if var.arm == "quixote_theme":
             tag_gitlab("PENTAHO/quixote-theme")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_langpack":
+        if var.arm == "langpack":
             tag_gitlab("PENTAHO/pentahoLanguagePacks")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_cas_tek":
+        if var.arm == "cas_tek":
             tag_gitlab("PENTAHO/pentaho-cas-tek")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_mondrian":
-            msg = bot.reply_to(message, "Введите номер версии (тег):")
-            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "mondrian":
+            pentaho_job_jenkins(message)
+            # msg = bot.reply_to(message, "Введите номер версии (тег):")
+            # bot.register_next_step_handler(msg, pentaho_issue_select)
     except Exception as e:
         errors(message)
 
@@ -476,18 +488,23 @@ def pentaho_job_jenkins(message):
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
             params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
-            if var.arm == "update_mondrian":
+            if var.arm == "mondrian":
                 params = {"stand": var.stand, "tags": str(var.arm)}
         if var.issue_select == "Yes":
             params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id,}
-        text = "{} cтучится в jenkins чтобы выполнить {} для Пентахи".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы выполнить обновление {} для Пентахи".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
-        text = "{} на пентахи выполняется {} версия {}".format(name_user, var.arm, var.tag)
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        text = "{} обновляет на пентахе {} до версии {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag))
         job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
         test_run(message, var.arm, params, 70, job)
         menu_help(message)
@@ -503,10 +520,15 @@ def pentaho_build_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать для пентахи  {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Build_' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 4 минуточек и плагин " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 4 минуточек и плагин " + str(var.arm) + " соберется")
         job = jenkins.get_job('GISTEK_Pentaho/Build_' + str(var.arm))
         test_run(message, var.arm, "Без этого", 240, job)
         menu_help(message)
@@ -529,21 +551,21 @@ def portal_action_select(message):
 def portal_app_select(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "Build":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme")
             msg = bot.reply_to(message, "Выберите портлет для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_build_job_jenkins)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_public_internal_select)
-        if var.build_deloy == "Назад в главное меню":
+        if var.build_deploy == "Назад в главное меню":
             menu_help(message)
     except Exception as e:
         errors(message)
@@ -568,7 +590,10 @@ def portal_app_2_select(message):
         var = user_dict[chat_id]
         var.open_close = open_close
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme", "lar_int", "lar_public", "lar_int_pub", "sync")
+        if var.open_close == "public":
+            markup.add("hook-asset-publisher", "hook-search", "languagePackRU", "mainpageGEO", "npa-loader", "portal-iframe", "slider", "subsystem-search", "support-mail-portlet", "urc-theme", "lar_public", "sync")
+        if var.open_close == "internal":
+            markup.add("hook-search", "inspinia-theme", "languagePackRU", "login-hook", "notification-portlet", "portal-iframe", "reports-display-portlet", "subsystem-search", "support-mail-portlet", "lar_int", "lar_int_pub")
         msg = bot.reply_to(message, "Выберите какой портлет будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_tag_select)
     except Exception as e:
@@ -708,7 +733,7 @@ def portal_ask(message):
         var.issue_id = issue_id
         markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
         markup.add("Да", "Начать с начала", "Вернуться в главное меню")
-        text = "Обновить {} до версии {} на {} части на стенде {} № задачи: {}".format(var.arm, var.tag, var.open_close, var.stand, var.issue_id)
+        text = "Обновить {} до версии {} на {} части на стенде {}, с № задачи: {}".format(var.arm, var.tag, var.open_close, var.stand, var.issue_id)
         msg = bot.reply_to(message, text, reply_markup=markup)
         bot.register_next_step_handler(msg, portal_job_jenkins)
     except Exception as e:
@@ -731,10 +756,15 @@ def portal_job_jenkins(message):
                 params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "version": str(var.tag)}
             if var.issue_select == "Yes":
                 params = {"stand": var.stand, "public_internal": str(var.open_close), "TARGET_TAGS": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
-            jenkins.build_job('GISTEK_Portal/Update_App', params)
+            try:
+                jenkins.build_job('GISTEK_Portal/Update_App', params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Portal/Update_App', params)
             text = "{} на портале {} обновляет {}".format(name_user, var.stand, var.arm)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+            bot.send_message(message.chat.id, "..еще 3 минуты и " + str(var.arm) + " на портале " + str(var.stand) + " обновится, версия " + str(var.tag))
             job = jenkins.get_job('GISTEK_Portal/Update_App')
             test_run(message, var.arm, params, 180, job)
             menu_help(message)
@@ -750,10 +780,15 @@ def portal_build_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать портлет  {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Portal/' + str(var.arm))
+        try:
+            jenkins.build_job('GISTEK_Portal/' + str(var.arm))
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Portal/' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 3 минуты (или даже меньше) и портлет " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 3 минуты (или даже меньше) и портлет " + str(var.arm) + " соберется")
         job = jenkins.get_job('GISTEK_Portal/' + str(var.arm))
         test_run(message, var.arm, "Без оных", 180, job)
         menu_help(message)
@@ -774,21 +809,21 @@ def mobile_action_select(message):
 def mobile_action_select_2(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "Build":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("Android", "portlet", "web_service")
             msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_job_build_jenkins)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_app_select)
-        if var.build_deloy == "Назад в главное меню":
+        if var.build_deploy == "Назад в главное меню":
             menu_help(message)
     except Exception as e:
         errors(message)
@@ -802,10 +837,15 @@ def mobile_job_build_jenkins(message):
         text = "{} cтучится в jenkins чтобы собрать приложение {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
+        try:
+            jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_MobileApp/Build_' + str(var.arm))
         text = "{} собирает {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 4 минуточек и приложение " + str(var.arm) + " соберется (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 4 минуточек и приложение " + str(var.arm) + " соберется")
         job = jenkins.get_job('GISTEK_MobileApp/Build_' + str(var.arm))
         test_run(message, var.arm, "Без оных", 200, job)
         menu_help(message)
@@ -819,7 +859,7 @@ def mobile_app_select(message):
         var = user_dict[chat_id]
         var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update_web_service", "update_portlet")
+        markup.add("web_service", "portlet")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, mobile_tag_select)
     except Exception as e:
@@ -831,13 +871,13 @@ def mobile_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        if var.arm == "update_web_service":
+        if var.arm == "web_service":
             tag_gitlab("MOBILE-APP/web-service-java")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item2, item3, item4, item5)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_job_jenkins)
-        if var.arm == "update_langpack":
+        if var.arm == "langpack":
             tag_gitlab("MOBILE-APP/tek-portlet")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item2, item3, item4, item5, item6, item7, item8, item9)
@@ -858,10 +898,15 @@ def mobile_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы обновить {} для мобильного приложения".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_MobileApp/Update', params)
+        try:
+            jenkins.build_job('GISTEK_MobileApp/Update', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_MobileApp/Update', params)
         text = "{} для мобильного приложения выполняется {} тег {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 2 минуты и обновится " + str(var.arm) + " для мобильного приложения, версия " + str(var.tag))
         job = jenkins.get_job('GISTEK_MobileApp/Update')
         test_run(message, var.arm, params, 120, job)
         menu_help(message)
@@ -882,21 +927,21 @@ def integration_action_select(message):
 def integration_app_select(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "Build":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_build_stand_select)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_stand_select)
-        if var.build_deloy == "Назад в главное меню":
+        if var.build_deploy == "Назад в главное меню":
             menu_help(message)
     except Exception as e:
         errors(message)
@@ -908,7 +953,7 @@ def integration_stand_select(message):
         var = user_dict[chat_id]
         var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update", "update_generator", "update_logui")
+        markup.add("mis", "generator", "logui")
         msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
         bot.register_next_step_handler(msg, integration_tag_select)
     except Exception as e:
@@ -933,19 +978,19 @@ def integration_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        if var.arm == "update_generator":
+        if var.arm == "generator":
             tag_gitlab("INTEGRATIONAL/generator")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_job_jenkins)
-        if var.arm == "update":
+        if var.arm == "mis":
             tag_gitlab("INTEGRATIONAL/is")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_job_jenkins)
-        if var.arm == "update_logui":
+        if var.arm == "logui":
             tag_gitlab("INTEGRATIONAL/log-ui")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2)
@@ -992,13 +1037,18 @@ def integration_build_job_jenkins(message):
         var = user_dict[chat_id]
         var.tag = tag
         params = {"stand": var.stand, "version": str(var.tag)}
-        text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы для {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
+        try:
+            jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Integration/' + str(var.arm), params)
         text = "{} собирает для интеграционной подсистемы {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 3 минуты и приложение " + str(var.arm) + " для интеграционной подсистемы соберется")
         job = jenkins.get_job('GISTEK_Integration/' + str(var.arm))
         test_run(message, var.arm, params, 180, job)
         menu_help(message)
@@ -1012,13 +1062,18 @@ def integration_job_jenkins(message):
         var = user_dict[chat_id]
         var.tag = tag
         params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
-        text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Integration/Update', params)
+        try:
+            jenkins.build_job('GISTEK_Integration/Update', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Integration/Update', params)
         text = "{} обновляет на интеграционной подсистеме {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 5 минуточек и приложение " + str(var.arm) + " для интеграционной подсистемы выкатится")
         job = jenkins.get_job('GISTEK_Integration/Update')
         test_run(message, var.arm, params, 300, job)
         menu_help(message)
@@ -1026,7 +1081,7 @@ def integration_job_jenkins(message):
         errors(message)
 
 # принимает сообщения от начальника на деплой
-@bot.message_handler(func=lambda message: re.search(r"infostream |registration |infostreamonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
+@bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
 def pizi_repost_build_deploy(message):
     secure(message)
     name_user = "{}({}):".format(message.chat.username, message.chat.id)
@@ -1040,9 +1095,12 @@ def pizi_repost_build_deploy(message):
             if from_whom == "238305929": # Босс ли?
                 # выбор версии приложения
                 version_for_pizi(message, "gtafo", "afo")
-                version_for_pizi(message, "gtarm", "infostream")
-                version_for_pizi(message, "gttechnologist", "infostream")
-                version_for_pizi(message, "gtonl", "infostreamonline")
+                version_for_pizi(message, "gtarm", "monitor")
+                version_for_pizi(message, "gtarm", "monitor")
+                version_for_pizi(message, "gttechnologist", "monitor")
+                version_for_pizi(message, "gttechnologist", "monitor")
+                version_for_pizi(message, "gtonl", "formfillonline")
+                version_for_pizi(message, "gtonl", "formfillonline")
                 version_for_pizi(message, "gtimpxml", "gtimpxml")
                 version_for_pizi(message, "gtxml", "gtxml")
                 version_for_pizi(message, "gttransport", "transport")
@@ -1069,7 +1127,12 @@ def pizi_repost_build_deploy(message):
                 params = {"TAG_GTAFO": gtafo, "TAG_GTARM": gtarm, "TAG_GTTECHNOLOGIST": gttechnologist, "TAG_GTONL": gtonl, "TAG_GTIMPXML": gtimpxml, "TAG_GTXML": gtxml, "TAG_GTTRANSPORT": gttransport, "TAG_GTCONTROL": gtcontrol, "TAG_GTEXPGISEE": gtexpgisee, 	"TAG_GTDOWNLOAD": gtdownload, "TAG_GTCLASSIFIER": gtclassifier, "TAG_CLASSIFIER_VIEW": classifier_view, "TAG_TICKET": ticket, "TAG_SSO_SERVER": sso_server, "TAG_REGISTRATION": registration, "TAG_LOADSSB": loadssb, "stand": stand}
                 text = "{} cтучится в jenkins чтобы обновить приложения Сбора".format(name_user)
                 logging.warning( u"%s", text)
-                jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+                try:
+                    jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+                except Exception:
+                    bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                    authentication(0)
+                    jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
                 text = "{} собирает приложения для Сбора".format(name_user)
                 logging.warning( u"%s", text)
                 bot.send_message(message.chat.id, "..еще 7 минут и обновим приложения Сбора")
@@ -1083,30 +1146,30 @@ def pizi_repost_build_deploy(message):
 
 @bot.message_handler(commands=['gistek_pizi'])
 def pizi_action_select(message):
-    secure(message)
+    secure_dev(message)
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
-        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
-        markup.add('Build', 'Deploy', "Назад в главное меню")
+        markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
+        markup.add('Build', 'Deploy', "Build_and_Deploy", "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите, что будем делать", reply_markup=markup)
         bot.register_next_step_handler(msg, pizi_stand_select)
 
 def pizi_stand_select(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "Назад в главное меню":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "Назад в главное меню":
             menu_help(message)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy" or var.build_deploy == "Build_and_Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, pizi_app_select)
-        if var.build_deloy == "Build":
+        if var.build_deploy == "Build":
             pizi_app_select(message)
     except Exception as e:
         errors(message)
@@ -1114,15 +1177,21 @@ def pizi_stand_select(message):
 def pizi_app_select(message):
     try:
         chat_id = message.chat.id
-        stand = message.text
         var = user_dict[chat_id]
+        stand = message.text
         var.stand = stand
-        if var.build_deloy == "Build":
+        if var.stand == "PI" or var.stand == "PK":
+            secure(message)
+            if user_true == "true":
+                pass
+            else:
+                menu_help(message)
+        if var.build_deploy == "Build" or var.build_deploy == "Build_and_Deploy":
             markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
             markup.add("App", "DB_change_script", "DB_refresh_db")
             msg = bot.reply_to(message, "Выберите приложение для сборки:", reply_markup=markup)
             bot.register_next_step_handler(msg, pizi_build_job_jenkins)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add("App", "Robot")
             msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
@@ -1133,17 +1202,23 @@ def pizi_app_select(message):
 def pizi_job_jenkins(message):
     try:
         chat_id = message.chat.id
-        arm = message.text
         var = user_dict[chat_id]
-        var.arm = arm
+        if var.arm == None:
+            arm = message.text
+            var.arm = arm
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         params = {"stand": var.stand}
         text = "{} cтучится в jenkins чтобы обновить {} для Сбора на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
-        jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
+        try:
+            jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pizi/Update_' + str(var.arm), params)
         text = "{} обновляет на Сборе {}".format(name_user, var.arm)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Сборе обновится")
         job = jenkins.get_job('GISTEK_Pizi/Update_' + str(var.arm))
         test_run(message, var.arm, params, 120, job)
         menu_help(message)
@@ -1166,10 +1241,15 @@ def pizi_build_job_jenkins(message):
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
             text = "{} cтучится в jenkins чтобы собрать приложение {} для Сбора".format(name_user, var.arm)
             logging.warning( u"%s", text)
-            jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
+            try:
+                jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Pizi/Build_' + str(var.arm))
             text = "{} собирает для сбора {}".format(name_user, var.arm)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще минута и " + str(var.arm) + " для Cбора соберется (если ошибки в jenkins не будет)")
+            bot.send_message(message.chat.id, "..еще минута и " + str(var.arm) + " для Cбора соберется")
             job = jenkins.get_job('GISTEK_Pizi/Build_' + str(var.arm))
             test_run(message, var.arm, "Без оных", 55, job)
             menu_help(message)
@@ -1183,18 +1263,28 @@ def pizi_build_job_jenkins_2(message):
         areyousure = message.text
         if areyousure == "Вернуться в главное меню":
             menu_help(message)
-        if areyousure == "Да" or areyousure == "Всё ок":
+        elif areyousure == "Да" or areyousure == "Всё ок":
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
             params = {"TAG_GTAFO": var.gtafo, "TAG_GTARM": var.gtarm, "TAG_GTTECHNOLOGIST": var.gttechnologist, "TAG_GTONL": var.gtonl, "TAG_GTIMPXML": var.gtimpxml, "TAG_GTXML": var.gtxml, "TAG_GTTRANSPORT": var.gttransport, "TAG_GTCONTROL": var.gtcontrol, "TAG_GTEXPGISEE": var.gtexpgisee, 	"TAG_GTDOWNLOAD": var.gtdownload, "TAG_GTCLASSIFIER": var.gtclassifier, "TAG_CLASSIFIER_VIEW": var.classifier_view, "TAG_TICKET": var.ticket, "TAG_SSO_SERVER": var.sso_server, "TAG_REGISTRATION": var.registration, "TAG_LOADSSB": var.loadssb}
             text = "{} cтучится в jenkins чтобы собрать приложения для Сбора".format(name_user)
             logging.warning( u"%s", text)
-            jenkins.build_job('GISTEK_Pizi/Build_App', params)
+            try:
+                jenkins.build_job('GISTEK_Pizi/Build_App', params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Pizi/Build_App', params)
             text = "{} собирает приложения для Сбора".format(name_user)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще 3 минуты и соберем приложения для Сбора (если ошибки в jenkins не будет)")
+            bot.send_message(message.chat.id, "..еще 3 минуты и соберем приложения для Сбора")
             job = jenkins.get_job('GISTEK_Pizi/Build_App')
             test_run(message, "Build_App", params, 185, job)
-            menu_help(message)
+            if var.build_deploy == "Build_and_Deploy":
+                var.build_deploy = "Deploy"
+                bot.send_message(message.chat.id, "Теперь выложим это добро на сервер.")
+                pizi_job_jenkins(message)
+            else:
+                menu_help(message)
         # if areyousure == "Изменить версии":
         else:
             markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True)
@@ -1210,9 +1300,9 @@ def pizi_build_job_jenkins_3(message):
         areyousure = message.text
         if areyousure == "Вернуться в главное меню":
             menu_help(message)
-        if areyousure == "Всё ок":
+        elif areyousure == "Всё ок":
             pizi_build_job_jenkins_2(message)
-        if areyousure == "gtafo" or areyousure == "gtarm" or areyousure == "gttechnologist" or areyousure == "gtonl" or areyousure == "gtimpxml" or areyousure == "gtimpxml" or areyousure == "gtxml" or areyousure == "gttransport" or areyousure == "gtcontrol" or areyousure == "gtexpgisee" or areyousure == "gtdownload" or areyousure == "gtclassifier" or areyousure == "classifier-view" or areyousure == "ticket" or areyousure == "sso-server" or areyousure == "registration" or areyousure == "loadssb":
+        elif areyousure == "gtafo" or areyousure == "gtarm" or areyousure == "gttechnologist" or areyousure == "gtonl" or areyousure == "gtimpxml" or areyousure == "gtimpxml" or areyousure == "gtxml" or areyousure == "gttransport" or areyousure == "gtcontrol" or areyousure == "gtexpgisee" or areyousure == "gtdownload" or areyousure == "gtclassifier" or areyousure == "classifier-view" or areyousure == "ticket" or areyousure == "sso-server" or areyousure == "registration" or areyousure == "loadssb":
             chat_id = message.chat.id
             arm = message.text
             var = user_dict[chat_id]
@@ -1279,27 +1369,32 @@ def poib_action_select(message):
 def poib_select(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "Build":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "Build":
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
             text = "{} cтучится в jenkins чтобы собрать приложение для ПОИБ".format(name_user)
             logging.warning( u"%s", text)
-            jenkins.build_job('GISTEK_Poib/Build')
+            try:
+                jenkins.build_job('GISTEK_Poib/Build')
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Poib/Build')
             text = "{} собирает ПОИБ".format(name_user)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется (если ошибки в jenkins не будет)")
+            bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется")
             job = jenkins.get_job('GISTEK_Poib/Build')
             test_run(message, "перезапуск ПОИБ", "без параметров", 65, job)
             menu_help(message)
-        if var.build_deloy == "Deploy":
+        if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add('REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, poib_app_select)
-        if var.build_deloy == "Назад в главное меню":
+        if var.build_deploy == "Назад в главное меню":
             menu_help(message)
     except Exception as e:
         errors(message)
@@ -1361,14 +1456,22 @@ def poib_job_jenkins(message):
         issue_id = message.text
         var = user_dict[chat_id]
         var.issue_id = issue_id
-        params = {"stand": var.stand, "version": str(var.tag)}
+        if var.issue_select == "No":
+            params = {"stand": var.stand, "version": str(var.tag)}
+        elif var.issue_select != "No":
+            params = {"stand": var.stand, "version": str(var.tag), "issue_id": str(var.issue_id)}
         text = "{} cтучится в jenkins чтобы выполнить {} для ПОИБ".format(name_user, var.arm)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
+        try:
+            jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Poib/' + str(var.arm), params)
         text = "{} на ПОИБ выполняется {} версия {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на ПОИБ обновится, версия " + str(var.tag))
         job = jenkins.get_job('GISTEK_Poib/' + str(var.arm))
         test_run(message, var.arm, params, 120, job)
         menu_help(message)
@@ -1415,10 +1518,15 @@ def system_job_jenkins(message):
         text = "{} cтучится в jenkins чтобы перезагрузить {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Restart', params)
+        try:
+            jenkins.build_job('GISTEK_Restart', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Restart', params)
         text = "{} перезагружается {} на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stand) + " перезапустится, (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще минуты и приложение " + str(var.arm) + " на " + str(var.stand) + " перезапустится")
         job = jenkins.get_job('GISTEK_Restart')
         test_run(message, var.arm, params, 40, job)
         menu_help(message)
@@ -1439,23 +1547,28 @@ def dev_action_select(message):
 def dev_select(message):
     try:
         chat_id = message.chat.id
-        build_deloy = message.text
-        var = Var(build_deloy)
+        build_deploy = message.text
+        var = Var(build_deploy)
         user_dict[chat_id] = var
-        var.build_deloy = build_deloy
-        if var.build_deloy == "restart":
+        var.build_deploy = build_deploy
+        if var.build_deploy == "restart":
             params = {"stand": "DEV", "system": "pentaho"}
             text = "{} cтучится в jenkins чтобы перезагрузить pentaho на DEV".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-            jenkins.build_job('GISTEK_Restart', params)
+            try:
+                jenkins.build_job('GISTEK_Restart', params)
+            except Exception:
+                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+                authentication(0)
+                jenkins.build_job('GISTEK_Restart', params)
             text = "{} перезагружается pentaho на DEV".format(name_user)
             logging.warning( u"%s", text)
-            bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится, (если ошибки в jenkins не будет)")
+            bot.send_message(message.chat.id, "..еще минуты и приложение pentaho на DEV перезапустится")
             job = jenkins.get_job('GISTEK_Restart')
             test_run(message, "Без оных", params, 70, job)
             menu_help(message)
-        if var.build_deloy == "deploy":
+        if var.build_deploy == "deploy":
             tag_gitlab("PENTAHO/pentaho-fileProperties")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
@@ -1476,19 +1589,29 @@ def dev_job(message):
         logging.warning( u"%s", text)
         params = {"version": var.tag}
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
-        jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Build_fileProperties', params)
         text = "{} собирает fileProperties".format(name_user)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 3 минуты и плагин fileProperties соберется (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 3 минуты и плагин fileProperties соберется")
         job = jenkins.get_job('GISTEK_Pentaho/Build_fileProperties')
         test_run(message, "Без параметров", params, 180, job)
         params = {"stand": "DEV", "tags": "fileProperties", "version": str(var.tag)}
         text = "{} cтучится в jenkins чтобы обновить fileProperties версии {} для пентахи на DEV".format(name_user, var.tag)
         logging.warning( u"%s", text)
-        jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        try:
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
+        except Exception:
+            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+            authentication(0)
+            jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
         text = "{} на Пентахах DEV обновляется fileProperties версия {}".format(name_user, var.tag)
         logging.warning( u"%s", text)
-        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится до версии " + str(var.tag) + " (если ошибки в jenkins не будет)")
+        bot.send_message(message.chat.id, "..еще 2 минуты и приложение fileProperties на пентахах DEV обновится до версии " + str(var.tag))
         job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
         test_run(message, "Без оных", params, 120, job)
     except Exception as e:
@@ -1507,4 +1630,10 @@ def dev_job(message):
 #     text = random.choice(lol.text)
 #     bot.send_message(message.chat.id, text)
 
-bot.polling(none_stop=True)
+while True:
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        text = "Ошибка соединения, перелогиниваемся."
+        logging.warning( u"%s", text)
+        authentication(0)
