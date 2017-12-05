@@ -121,6 +121,8 @@ def errors(message):
     text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
     logging.error( u"%s", text)
     bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
+    text = "Ошибка при работе с ботом у {}".format(message.chat.id)
+    bot.send_message("-216046302", text)
 
 # функция проверки на выполенния джобы в jenkins
 def test_run(message, arm, params, time_timeout, job):
@@ -224,6 +226,8 @@ def sync_start(message):
     if user_true == "true":
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
+        text = "{} решил синхронизировать стенды".format(name_user)
+        logging.warning( u"%s", text)
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         markup.add('sync_dev_pk', 'sync_pk_pi', 'sync_pk_pp', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите откуда куда передаем данные", reply_markup=markup)
@@ -236,6 +240,8 @@ def sync_select(message):
             var = Var(stand)
             user_dict[chat_id] = var
             var.stand = stand
+            text = "{} синхронизирует {}".format(name_user, var.stand)
+            logging.warning( u"%s", text)
             if var.stand == "Назад в главное меню":
                 menu_help(message)
             else:
@@ -397,7 +403,7 @@ def pentaho_app_2_select(message):
         var = user_dict[chat_id]
         var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update_plugins", "update_fileProperties", "update_quixote_theme", "update_langpack", "update_cas_tek", "update_mondrian")
+        markup.add("plugins", "fileProperties", "quixote_theme", "langpack", "cas_tek", "mondrian")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, pentaho_tag_select)
     except Exception as e:
@@ -409,39 +415,40 @@ def pentaho_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        if var.arm == "update_plugins":
+        if var.arm == "plugins":
             tag_gitlab("PENTAHO/pentaho-plugins")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item3, item4, item5)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_fileProperties":
+        if var.arm == "fileProperties":
             tag_gitlab("PENTAHO/pentaho-fileProperties")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_quixote_theme":
+        if var.arm == "quixote_theme":
             tag_gitlab("PENTAHO/quixote-theme")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_langpack":
+        if var.arm == "langpack":
             tag_gitlab("PENTAHO/pentahoLanguagePacks")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_cas_tek":
+        if var.arm == "cas_tek":
             tag_gitlab("PENTAHO/pentaho-cas-tek")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_issue_select)
-        if var.arm == "update_mondrian":
-            msg = bot.reply_to(message, "Введите номер версии (тег):")
-            bot.register_next_step_handler(msg, pentaho_issue_select)
+        if var.arm == "mondrian":
+            pentaho_job_jenkins(message)
+            # msg = bot.reply_to(message, "Введите номер версии (тег):")
+            # bot.register_next_step_handler(msg, pentaho_issue_select)
     except Exception as e:
         errors(message)
 
@@ -481,13 +488,13 @@ def pentaho_job_jenkins(message):
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         if var.issue_select == "No":
             params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
-            if var.arm == "update_mondrian":
+            if var.arm == "mondrian":
                 params = {"stand": var.stand, "tags": str(var.arm)}
         if var.issue_select == "Yes":
             params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id, "version": str(var.tag)}
             if var.arm == "update_mondrian":
                 params = {"stand": var.stand, "tags": str(var.arm), "issue_id": var.issue_id,}
-        text = "{} cтучится в jenkins чтобы выполнить {} для Пентахи".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы выполнить обновление {} для Пентахи".format(name_user, var.arm)
         logging.warning( u"%s", text)
         try:
             jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
@@ -495,7 +502,7 @@ def pentaho_job_jenkins(message):
             bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
             authentication(0)
             jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
-        text = "{} на пентахи выполняется {} версия {}".format(name_user, var.arm, var.tag)
+        text = "{} обновляет на пентахе {} до версии {}".format(name_user, var.arm, var.tag)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "..еще 2 минуты и приложение " + str(var.arm) + " на Пентахе обновится, версия " + str(var.tag))
         job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
@@ -583,7 +590,10 @@ def portal_app_2_select(message):
         var = user_dict[chat_id]
         var.open_close = open_close
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("hook-asset-publisher", "hook-search", "inspinia-theme", "languagePackRU", "login-hook", "mainpageGEO", "notification-portlet", "npa-loader", "portal-iframe", "reports-display-portlet", "slider", "subsystem-search", "support-mail-portlet", "urc-theme", "lar_int", "lar_public", "lar_int_pub", "sync")
+        if var.open_close == "public":
+            markup.add("hook-asset-publisher", "hook-search", "languagePackRU", "mainpageGEO", "npa-loader", "portal-iframe", "slider", "subsystem-search", "support-mail-portlet", "urc-theme", "lar_public", "sync")
+        if var.open_close == "internal":
+            markup.add("hook-search", "inspinia-theme", "languagePackRU", "login-hook", "notification-portlet", "portal-iframe", "reports-display-portlet", "subsystem-search", "support-mail-portlet", "lar_int", "lar_int_pub")
         msg = bot.reply_to(message, "Выберите какой портлет будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, portal_tag_select)
     except Exception as e:
@@ -723,7 +733,7 @@ def portal_ask(message):
         var.issue_id = issue_id
         markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
         markup.add("Да", "Начать с начала", "Вернуться в главное меню")
-        text = "Обновить {} до версии {} на {} части на стенде {} № задачи: {}".format(var.arm, var.tag, var.open_close, var.stand, var.issue_id)
+        text = "Обновить {} до версии {} на {} части на стенде {}, с № задачи: {}".format(var.arm, var.tag, var.open_close, var.stand, var.issue_id)
         msg = bot.reply_to(message, text, reply_markup=markup)
         bot.register_next_step_handler(msg, portal_job_jenkins)
     except Exception as e:
@@ -849,7 +859,7 @@ def mobile_app_select(message):
         var = user_dict[chat_id]
         var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update_web_service", "update_portlet")
+        markup.add("web_service", "portlet")
         msg = bot.reply_to(message, "Выберите что будем обновлять:", reply_markup=markup)
         bot.register_next_step_handler(msg, mobile_tag_select)
     except Exception as e:
@@ -861,13 +871,13 @@ def mobile_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        if var.arm == "update_web_service":
+        if var.arm == "web_service":
             tag_gitlab("MOBILE-APP/web-service-java")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item2, item3, item4, item5)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_job_jenkins)
-        if var.arm == "update_langpack":
+        if var.arm == "langpack":
             tag_gitlab("MOBILE-APP/tek-portlet")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item2, item3, item4, item5, item6, item7, item8, item9)
@@ -943,7 +953,7 @@ def integration_stand_select(message):
         var = user_dict[chat_id]
         var.stand = stand
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-        markup.add("update", "update_generator", "update_logui")
+        markup.add("mis", "generator", "logui")
         msg = bot.reply_to(message, "Выберите приложение для обновления:", reply_markup=markup)
         bot.register_next_step_handler(msg, integration_tag_select)
     except Exception as e:
@@ -968,19 +978,19 @@ def integration_tag_select(message):
         arm = message.text
         var = user_dict[chat_id]
         var.arm = arm
-        if var.arm == "update_generator":
+        if var.arm == "generator":
             tag_gitlab("INTEGRATIONAL/generator")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_job_jenkins)
-        if var.arm == "update":
+        if var.arm == "mis":
             tag_gitlab("INTEGRATIONAL/is")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
             msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_job_jenkins)
-        if var.arm == "update_logui":
+        if var.arm == "logui":
             tag_gitlab("INTEGRATIONAL/log-ui")
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup.add(item1, item2)
@@ -1027,7 +1037,7 @@ def integration_build_job_jenkins(message):
         var = user_dict[chat_id]
         var.tag = tag
         params = {"stand": var.stand, "version": str(var.tag)}
-        text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы собрать приложение {} для интеграционной подсистемы для {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         try:
@@ -1052,7 +1062,7 @@ def integration_job_jenkins(message):
         var = user_dict[chat_id]
         var.tag = tag
         params = {"stand": var.stand, "tags": str(var.arm), "version": str(var.tag)}
-        text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы".format(name_user, var.arm)
+        text = "{} cтучится в jenkins чтобы обновить приложение {} для интеграционной подсистемы на {}".format(name_user, var.arm, var.stand)
         logging.warning( u"%s", text)
         bot.send_message(message.chat.id, "пыжимся и тужимся... ")
         try:
@@ -1624,6 +1634,6 @@ while True:
     try:
         bot.polling(none_stop=True)
     except Exception as e:
-        text = "Ошибка соединения перелогиниваемся."
+        text = "Ошибка соединения, перелогиниваемся."
         logging.warning( u"%s", text)
         authentication(0)
