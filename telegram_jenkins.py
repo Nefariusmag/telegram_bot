@@ -61,34 +61,22 @@ class Var:
         self.tag = None
         self.open_close = None
         # ПИЗИ
-        self.gtafo = "dev-turchinskiy-26639"
-        self.gtarm = "dev-turchinskiy-26639"
-        self.gttechnologist = "dev-turchinskiy-26639"
-        self.gtonl = "dev-brykov-25530"
-        self.gtimpxml = "dev-turchinskiy-26639"
-        self.gtxml = "dev-turchinskiy-26639"
-        self.gttransport= "dev-turchinskiy-26639"
-        self.gtcontrol = "dev-turchinskiy-26639"
-        self.gtexpgisee = "dev-turchinskiy-26639"
-        self.gtdownload = "dev-turchinskiy-26639"
-        self.gtclassifier = "dev-turchinskiy-26639"
-        self.classifier_view = "dev-turchinskiy-26639"
-        self.ticket = "dev-turchinskiy-26639"
-        self.sso_server = "dev-turchinskiy-26639"
-        self.registration = "dev-turchinskiy-26639"
-        self.loadssb = "dev-turchinskiy-26639"
-
-# функция подстановки версии переменным
-def version_for_pizi(message, arm_jenkins, arm_git):
-    arm_search = "{} .*".format(arm_git)
-    search_version = re.search(arm_search, message.text)
-    if search_version != None:
-        select_version = search_version.group(0).split(" ")[1]
-        if select_version == "-": # проверка на внезапные тире
-            select_version = search_version.group(0).split(" ")[2]
-        exec('%s = "%s"' % (str(arm_jenkins),str(select_version)), globals())
-    else:
-        exec('%s = "release"' % (str(arm_jenkins)), globals())
+        self.gtafo = "release"
+        self.gtarm = "release"
+        self.gttechnologist = "release"
+        self.gtonl = "drelease"
+        self.gtimpxml = "release"
+        self.gtxml = "release"
+        self.gttransport= "release"
+        self.gtcontrol = "release"
+        self.gtexpgisee = "release"
+        self.gtdownload = "release"
+        self.gtclassifier = "release"
+        self.classifier_view = "release"
+        self.ticket = "release"
+        self.sso_server = "release"
+        self.registration = "release"
+        self.loadssb = "release"
 
 # функция проверки доступа пользователя
 def secure(message):
@@ -260,7 +248,7 @@ def sync_select(message):
         except Exception as e:
             errors(message)
 
-@bot.message_handler(commands=['gistek_build_arm'])
+
 def arm_stand_select(message):
     secure(message)
     if user_true == "true":
@@ -363,7 +351,7 @@ def arm_job_jenkins(message):
 
 ##### start
 
-@bot.message_handler(commands=['gistek_pentaho'])
+
 def pentaho_action_select(message):
     secure(message)
     if user_true == "true":
@@ -537,7 +525,7 @@ def pentaho_build_job_jenkins(message):
 
 ##### finish
 
-@bot.message_handler(commands=['gistek_portal'])
+
 def portal_action_select(message):
     secure(message)
     if user_true == "true":
@@ -795,7 +783,7 @@ def portal_build_job_jenkins(message):
     except Exception as e:
         errors(message)
 
-@bot.message_handler(commands=['gistek_mobile'])
+
 def mobile_action_select(message):
     secure(message)
     if user_true == "true":
@@ -913,7 +901,7 @@ def mobile_job_jenkins(message):
     except Exception as e:
         errors(message)
 
-@bot.message_handler(commands=['gistek_integration'])
+
 def integration_action_select(message):
     secure(message)
     if user_true == "true":
@@ -1355,7 +1343,6 @@ def pizi_build_job_jenkins_4(message):
     except Exception as e:
         errors(message)
 
-@bot.message_handler(commands=['gistek_poib'])
 def poib_action_select(message):
     secure(message)
     if user_true == "true":
@@ -1387,7 +1374,7 @@ def poib_select(message):
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется")
             job = jenkins.get_job('GISTEK_Poib/Build')
-            test_run(message, "перезапуск ПОИБ", "без параметров", 65, job)
+            test_run(message, "сборка ПОИБ", "без параметров", 65, job)
             menu_help(message)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
@@ -1478,7 +1465,7 @@ def poib_job_jenkins(message):
     except Exception as e:
         errors(message)
 
-@bot.message_handler(commands=['restart_system'])
+
 def system_action_select(message):
     secure(message)
     if user_true == "true":
@@ -1629,6 +1616,63 @@ def dev_job(message):
 #     import lol
 #     text = random.choice(lol.text)
 #     bot.send_message(message.chat.id, text)
+
+import pizi, integration, poib, portal, mobile, pentaho, arm, restart
+
+@bot.message_handler(commands=['gistek_pizi'])
+def main_pizi_action(message):
+    secure(message)
+    if user_true == "true":
+        pizi.pizi_action(bot, errors, jenkins, message)
+
+# принимает сообщения от начальника на деплой
+@bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
+def main_pizi_repost_buld_deploy(message):
+    secure(message)
+    if user_true == "true":
+        pizi.pizi_repost_build_deploy(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['gistek_build_arm'])
+def main_arm_action(message):
+    secure(message)
+    if user_true == "true":
+        arm.arm_action(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['restart_system'])
+def main_restart_action(message):
+    secure(message)
+    if user_true == "true":
+        restart.restart_action(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['gistek_poib'])
+def main_poib_action(message):
+    secure(message)
+    if user_true == "true":
+        poib.poib_action(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['gistek_integration'])
+def main_integration_action(message):
+    secure(message)
+    if user_true == "true":
+        integration.integration_action(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['gistek_pentaho'])
+def main_pentaho_action(message):
+    secure(message)
+    if user_true == "true":
+        pentaho.pentaho_action(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['gistek_portal'])
+def main_portal_action(message):
+    secure(message)
+    if user_true == "true":
+        portal.portal_action(bot, errors, jenkins, message)
+
+@bot.message_handler(commands=['gistek_mobile'])
+def main_mobile_action(message):
+    secure(message)
+    if user_true == "true":
+        mibile.mobile_action(bot, errors, jenkins, message)
 
 while True:
     try:
