@@ -10,12 +10,13 @@ config.py
 
 --Setup:
 
-Установить: python3 и pip3
+Установка:
 
-Необходимые библиотеки:
-apt-get install python3 python-setuptools
-yum install python3 python-setuptools
-pip3 install logging pyTelegramBotAPI jenkinsapi python-gitlab
+apt-get install python3 python-setuptools python-pip
+yum install python-setuptools python34-setuptools python-pip
+
+pip3 install pyTelegramBotAPI jenkinsapi python-gitlab
+pip install logging
 
 Добавить в крон:
 */15 * * * * cd ~/telegram_bot && ./start.sh start &

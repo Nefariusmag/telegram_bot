@@ -13,17 +13,13 @@ def lock_file(fname):
 
 lock = lock_file('telegram_jenkins.py')
 
-import time, os, random, re
+import time, os, re, logging, jenkinsapi, telebot # random
 
-import jenkinsapi
 from jenkinsapi.jenkins import Jenkins
-
 # логирование, обозначается уровень логирования INFO/DEBUG/ERROR/CRITICAL
-import logging
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO, filename = u'telegram_bot.log')
 
 import config
-import telebot
 from telebot import types
 
 bot = telebot.TeleBot(config.token)
@@ -234,7 +230,12 @@ def sync_select(message):
                 menu_help(message)
             else:
                 # специально для Юры и его лени
-                jenkins_dkp = Jenkins(config.url_jenkins2, username=config.username, password=config.password)
+                try:
+                    jenkins_dkp = Jenkins(config.url_jenkins2, username=config.username, password=config.password)
+                except Exception as e:
+                    text = "{} второй раз пробуем авторизоваться так как в первом ошибка".format(name_user)
+                    logging.warning( u"%s", text)
+                    jenkins_dkp = Jenkins(config.url_jenkins2, username=config.username, password=config.password)
                 text = "Авторизация в jenkins_dkp прошла и теперь {} запускает {}".format(name_user, var.stand)
                 logging.warning( u"%s", text)
                 try:
@@ -1132,7 +1133,6 @@ def pizi_repost_build_deploy(message):
         except Exception as e:
             errors(message)
 
-@bot.message_handler(commands=['gistek_pizi'])
 def pizi_action_select(message):
     secure_dev(message)
     if user_true == "true":
@@ -1623,7 +1623,7 @@ import pizi, integration, poib, portal, mobile, pentaho, arm, restart
 def main_pizi_action(message):
     secure(message)
     if user_true == "true":
-        pizi.pizi_action(bot, errors, jenkins, message)
+        pizi.pizi_action(bot, errors, jenkins, test_run, message)
 
 # принимает сообщения от начальника на деплой
 @bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
@@ -1648,7 +1648,7 @@ def main_restart_action(message):
 def main_poib_action(message):
     secure(message)
     if user_true == "true":
-        poib.poib_action(bot, errors, jenkins, message)
+        poib.poib_action(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['gistek_integration'])
 def main_integration_action(message):

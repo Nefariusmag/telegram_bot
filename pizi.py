@@ -1,40 +1,56 @@
 # -*- coding: utf-8 -*-
+import re, logging
 
 def pizi_action(bot, errors, jenkins, test_run, message):
     # try:
-    search_action = re.search("build", message.text)
-    if search_action != None:
-        try:
-            jenkins.build_job('GISTEK_Pizi/Build_App')
-        except Exception:
-            bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
-            authentication(0)
-            jenkins.build_job('GISTEK_Pizi/Build_App')
-        bot.send_message(message.chat.id, "..еще минута и приложения для Cбора соберутся")
+    name_user = "{}({}):".format(message.chat.username, message.chat.id)
+    search_action = re.search("build|BUILD|Build|Собрать|сборка|собрать|билд|сбилди|deploy|Deploy|обнови|update|Update|UPDATE|Обнови|деплой", message.text)
+    search_action = search_action.group(0)
+    if search_action in ["build", "BUILD", "Build", "Собрать", "сборка", "собрать", "билд", "сбилди"]:
+        # try:
+        jenkins.build_job('GISTEK_Pizi/Build_App')
+        # except Exception:
+        #     bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+        #     authentication(0)
+        #     jenkins.build_job('GISTEK_Pizi/Build_App')
+        text = "{} собирает Сбор".format(name_user)
+        logging.warning( u"%s", text)
+        bot.send_message(message.chat.id, "..еще пара минут и приложения для Cбора соберутся")
         job = jenkins.get_job('GISTEK_Pizi/Build_App')
-        test_run(message, var.arm, "Без оных", 55, job)
-    else:
-        search_action = re.search("deploy", message.text)
-        if search_action != None:
-            search_stand = re.search(r"ПП|ПИ|ПК|PP|PI|PK|REA_TEST", message.text)
-            if search_stand == "ПК" or search_stand == "PK":
-                params = {"stand": "PK"}
-            elif search_stand == "ПИ" or search_stand == "PI":
-                params = {"stand": "PK"}
-            else
-                params = {"stand": "REA_TEST"}
-            try:
-                jenkins.build_job('GISTEK_Pizi/Update_App', params)
-            except Exception:
-                bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
-                authentication(0)
-                jenkins.build_job('GISTEK_Pizi/Update_App', params)
-            job = jenkins.get_job('GISTEK_Pizi/Update_App')
-            test_run(message, var.arm, params, 120, job)
+        test_run(message, "сбор", "Без оных", 150, job)
+    elif search_action in ["deploy", "Deploy", "обнови", "update", "Update", "UPDATE", "Обнови", "деплой"]:
+        search_stand = re.search(r"ПИ |пи |PI |pi |ПК |пк |PK |pk |REA_TEST |rea_test |PP |pp |ПП |пп ", message.text)
+        if search_stand != None:
+            search_stand = search_stand.group(0)
+        if search_stand in ["ПК", "пк", "PK", "pk"]:
+            stand = "PK"
+        elif search_stand in ["ПИ", "пи", "PI", "pi"]:
+            stand = "PI"
+        elif search_stand in ["REA_TEST", "rea_test", "PP", "pp", "ПП", "пп"]:
+            stand = "REA_TEST"
+        else:
+            bot.send_message(message.chat.id, "Вы не указали стенд, но подумал я решил за вас и решил, что это будет тестовый")
+            stand = "REA_TEST"
+        search_issue = re.search(r"#[0-9]{5}", message.text)
+        if search_issue != None:
+            search_issue = search_issue.group(0)
+            issue_id = search_issue
+            params = {"stand": stand, "issue_id": issue_id}
+        else:
+            params = {"stand": stand}
+            issue_id = "отсутствует"
+        # try:
+        jenkins.build_job('GISTEK_Pizi/Update_App', params)
+        # except Exception:
+        #     bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+        #     authentication(0)
+        #     jenkins.build_job('GISTEK_Pizi/Update_App', params)
+        text = "..еще 5 минут и Сбор на {} обновится, задача {}".format(stand, issue_id)
+        bot.send_message(message.chat.id, text)
+        job = jenkins.get_job('GISTEK_Pizi/Update_App')
+        test_run(message, "pizi", params, 120, job)
     # except Exception as e:
     #     errors(message)
-
-
 
 # функция подстановки версии переменным
 def version_for_pizi(message, arm_jenkins, arm_git):
