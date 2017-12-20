@@ -13,7 +13,7 @@ def lock_file(fname):
 
 lock = lock_file('telegram_jenkins.py')
 
-import time, os, re, logging, jenkinsapi, telebot # random
+import time, os, re, logging, jenkinsapi, telebot, random
 
 from jenkinsapi.jenkins import Jenkins
 # логирование, обозначается уровень логирования INFO/DEBUG/ERROR/CRITICAL
@@ -105,8 +105,16 @@ def errors(message):
     text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
     logging.error( u"%s", text)
     bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
+    # подгрузить стикер в память
+    sti = open("kill_sti/1.webp", 'rb')
+    # отправить стикер
+    bot.send_sticker(message.chat.id, sti)
     text = "Ошибка при работе с ботом у {}".format(message.chat.id)
     bot.send_message("-216046302", text)
+    # подгрузить стикер в память
+    sti = open("kill_sti/2.webp", 'rb')
+    # отправить стикер
+    bot.send_sticker("-216046302", sti)
 
 # функция проверки на выполенния джобы в jenkins
 def test_run(message, arm, params, time_timeout, job):
@@ -124,11 +132,23 @@ def test_run(message, arm, params, time_timeout, job):
     if task_status == "True":
         text = "Я сам в шоке, но {} готово!".format(job)
         bot.send_message(message.chat.id, text)
+        # получить рандомный стикер из папки
+        sti = random.choice(os.listdir("true_sti"))
+        # добавить к стикеру путь до папки
+        sti = "true_sti/{}".format(sti)
+        # подгрузить стикеры в память
+        sti = open(sti, 'rb')
+        # отправить стикер
+        bot.send_sticker(message.chat.id, sti)
         text = "{} выполнилось {} c {}".format(name_user, arm, params)
         logging.warning( u"%s", text)
     else:
         text = "Ошибка, посмотрите логи и обратитесь к администратору"
         bot.send_message(message.chat.id, text)
+        # подгрузить стикер в память
+        sti = open("logs.webp", 'rb')
+        # отправить стикер
+        bot.send_sticker(message.chat.id, sti)
         text = "{} не выполнилось {} с {}, сейчас посмотрим логи".format(name_user, arm, params)
         logging.error( u"%s", text)
         # получение из jenkins логов из джобы
@@ -1069,69 +1089,69 @@ def integration_job_jenkins(message):
     except Exception as e:
         errors(message)
 
-# принимает сообщения от начальника на деплой
-@bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
-def pizi_repost_build_deploy(message):
-    secure(message)
-    name_user = "{}({}):".format(message.chat.username, message.chat.id)
-    if user_true == "true":
-        try:
-            try:
-                from_whom = str(message.forward_from.id)
-            except Exception as e:
-                bot.send_message(message.chat.id, "Это не репост от Федорова!")
-                from_whom = str(message.chat.id)
-            if from_whom == "238305929": # Босс ли?
-                # выбор версии приложения
-                version_for_pizi(message, "gtafo", "afo")
-                version_for_pizi(message, "gtarm", "monitor")
-                version_for_pizi(message, "gtarm", "monitor")
-                version_for_pizi(message, "gttechnologist", "monitor")
-                version_for_pizi(message, "gttechnologist", "monitor")
-                version_for_pizi(message, "gtonl", "formfillonline")
-                version_for_pizi(message, "gtonl", "formfillonline")
-                version_for_pizi(message, "gtimpxml", "gtimpxml")
-                version_for_pizi(message, "gtxml", "gtxml")
-                version_for_pizi(message, "gttransport", "transport")
-                version_for_pizi(message, "gtcontrol", "gtcontrol")
-                version_for_pizi(message, "gtexpgisee", "gtexpgisee")
-                version_for_pizi(message, "gtdownload", "gtdownload")
-                version_for_pizi(message, "gtclassifier", "gtclassifier")
-                version_for_pizi(message, "classifier_view", "classifier-view")
-                version_for_pizi(message, "ticket", "ticket")
-                version_for_pizi(message, "sso_server", "sso_server")
-                version_for_pizi(message, "registration", "registration")
-                version_for_pizi(message, "loadssb", "loadssb")
-                # выбор стенда
-                version = re.search("на ПИ", message.text)
-                if version != None:
-                    stand = "PI"
-                    text = "На прод деплоим \n---------------- \ngtafo версии - {} \ngtarm версии - {} \ngttechnologist версии - {} \ngtonl версии - {} \ngtimpxml версии - {} \ngtxml версии - {} \ngttransport версии - {} \ngtcontrol версии - {} \ngtexpgisee версии - {} \ngtdownload версии - {} \ngtclassifier версии - {} \nclassifier_view версии - {} \nticket версии - {} \nsso-server версии - {} \nregistration версии - {} \nloadssb версии - {} \n----------------".format(gtafo, gtarm, gttechnologist, gtonl, gtimpxml, gtxml, gttransport, gtcontrol, gtexpgisee, gtdownload, gtclassifier, classifier_view, ticket, sso_server, registration, loadssb)
-                    bot.send_message(message.chat.id, text)
-                    bot.send_message(message.chat.id, "Есть 15 секунд на подумать, отмена через jenkins")
-                    time.sleep(15)
-                else:
-                    stand = "REA_TEST"
-                bot.send_message(message.chat.id, "Cходи, завари чайку пока этот сбор деплоится))")
-                params = {"TAG_GTAFO": gtafo, "TAG_GTARM": gtarm, "TAG_GTTECHNOLOGIST": gttechnologist, "TAG_GTONL": gtonl, "TAG_GTIMPXML": gtimpxml, "TAG_GTXML": gtxml, "TAG_GTTRANSPORT": gttransport, "TAG_GTCONTROL": gtcontrol, "TAG_GTEXPGISEE": gtexpgisee, 	"TAG_GTDOWNLOAD": gtdownload, "TAG_GTCLASSIFIER": gtclassifier, "TAG_CLASSIFIER_VIEW": classifier_view, "TAG_TICKET": ticket, "TAG_SSO_SERVER": sso_server, "TAG_REGISTRATION": registration, "TAG_LOADSSB": loadssb, "stand": stand}
-                text = "{} cтучится в jenkins чтобы обновить приложения Сбора".format(name_user)
-                logging.warning( u"%s", text)
-                try:
-                    jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
-                except Exception:
-                    bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
-                    authentication(0)
-                    jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
-                text = "{} собирает приложения для Сбора".format(name_user)
-                logging.warning( u"%s", text)
-                bot.send_message(message.chat.id, "..еще 7 минут и обновим приложения Сбора")
-                job = jenkins.get_job('GISTEK_Pizi/Build_and_Deploy')
-                test_run(message, "Build_and_Deploy", params, 420, job)
-                menu_help(message)
-            else:
-                bot.send_message(message.chat.id, "Нету апрува от начальника, в другой раз.")
-        except Exception as e:
-            errors(message)
+# # принимает сообщения от начальника на деплой
+# @bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
+# def pizi_repost_build_deploy(message):
+#     secure(message)
+#     name_user = "{}({}):".format(message.chat.username, message.chat.id)
+#     if user_true == "true":
+#         try:
+#             try:
+#                 from_whom = str(message.forward_from.id)
+#             except Exception as e:
+#                 bot.send_message(message.chat.id, "Это не репост от Федорова!")
+#                 from_whom = str(message.chat.id)
+#             if from_whom == "238305929": # Босс ли?
+#                 # выбор версии приложения
+#                 version_for_pizi(message, "gtafo", "afo")
+#                 version_for_pizi(message, "gtarm", "monitor")
+#                 version_for_pizi(message, "gtarm", "monitor")
+#                 version_for_pizi(message, "gttechnologist", "monitor")
+#                 version_for_pizi(message, "gttechnologist", "monitor")
+#                 version_for_pizi(message, "gtonl", "formfillonline")
+#                 version_for_pizi(message, "gtonl", "formfillonline")
+#                 version_for_pizi(message, "gtimpxml", "gtimpxml")
+#                 version_for_pizi(message, "gtxml", "gtxml")
+#                 version_for_pizi(message, "gttransport", "transport")
+#                 version_for_pizi(message, "gtcontrol", "gtcontrol")
+#                 version_for_pizi(message, "gtexpgisee", "gtexpgisee")
+#                 version_for_pizi(message, "gtdownload", "gtdownload")
+#                 version_for_pizi(message, "gtclassifier", "gtclassifier")
+#                 version_for_pizi(message, "classifier_view", "classifier-view")
+#                 version_for_pizi(message, "ticket", "ticket")
+#                 version_for_pizi(message, "sso_server", "sso_server")
+#                 version_for_pizi(message, "registration", "registration")
+#                 version_for_pizi(message, "loadssb", "loadssb")
+#                 # выбор стенда
+#                 version = re.search("на ПИ", message.text)
+#                 if version != None:
+#                     stand = "PI"
+#                     text = "На прод деплоим \n---------------- \ngtafo версии - {} \ngtarm версии - {} \ngttechnologist версии - {} \ngtonl версии - {} \ngtimpxml версии - {} \ngtxml версии - {} \ngttransport версии - {} \ngtcontrol версии - {} \ngtexpgisee версии - {} \ngtdownload версии - {} \ngtclassifier версии - {} \nclassifier_view версии - {} \nticket версии - {} \nsso-server версии - {} \nregistration версии - {} \nloadssb версии - {} \n----------------".format(gtafo, gtarm, gttechnologist, gtonl, gtimpxml, gtxml, gttransport, gtcontrol, gtexpgisee, gtdownload, gtclassifier, classifier_view, ticket, sso_server, registration, loadssb)
+#                     bot.send_message(message.chat.id, text)
+#                     bot.send_message(message.chat.id, "Есть 15 секунд на подумать, отмена через jenkins")
+#                     time.sleep(15)
+#                 else:
+#                     stand = "REA_TEST"
+#                 bot.send_message(message.chat.id, "Cходи, завари чайку пока этот сбор деплоится))")
+#                 params = {"TAG_GTAFO": gtafo, "TAG_GTARM": gtarm, "TAG_GTTECHNOLOGIST": gttechnologist, "TAG_GTONL": gtonl, "TAG_GTIMPXML": gtimpxml, "TAG_GTXML": gtxml, "TAG_GTTRANSPORT": gttransport, "TAG_GTCONTROL": gtcontrol, "TAG_GTEXPGISEE": gtexpgisee, 	"TAG_GTDOWNLOAD": gtdownload, "TAG_GTCLASSIFIER": gtclassifier, "TAG_CLASSIFIER_VIEW": classifier_view, "TAG_TICKET": ticket, "TAG_SSO_SERVER": sso_server, "TAG_REGISTRATION": registration, "TAG_LOADSSB": loadssb, "stand": stand}
+#                 text = "{} cтучится в jenkins чтобы обновить приложения Сбора".format(name_user)
+#                 logging.warning( u"%s", text)
+#                 try:
+#                     jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+#                 except Exception:
+#                     bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
+#                     authentication(0)
+#                     jenkins.build_job('GISTEK_Pizi/Build_and_Deploy', params)
+#                 text = "{} собирает приложения для Сбора".format(name_user)
+#                 logging.warning( u"%s", text)
+#                 bot.send_message(message.chat.id, "..еще 7 минут и обновим приложения Сбора")
+#                 job = jenkins.get_job('GISTEK_Pizi/Build_and_Deploy')
+#                 test_run(message, "Build_and_Deploy", params, 420, job)
+#                 menu_help(message)
+#             else:
+#                 bot.send_message(message.chat.id, "Нету апрува от начальника, в другой раз.")
+#         except Exception as e:
+#             errors(message)
 
 def pizi_action_select(message):
     secure_dev(message)
@@ -1630,7 +1650,7 @@ def main_pizi_action(message):
 def main_pizi_repost_buld_deploy(message):
     secure(message)
     if user_true == "true":
-        pizi.pizi_repost_build_deploy(bot, errors, jenkins, message)
+        pizi.pizi_repost_build_deploy(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['gistek_build_arm'])
 def main_arm_action(message):
@@ -1666,7 +1686,7 @@ def main_pentaho_action(message):
 def main_portal_action(message):
     secure(message)
     if user_true == "true":
-        portal.portal_action(bot, errors, jenkins, message)
+        portal.portal_action(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['gistek_mobile'])
 def main_mobile_action(message):

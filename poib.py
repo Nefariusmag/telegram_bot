@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
-import re, logging
+import re, logging, os, random
 
 def poib_action(bot, errors, jenkins, test_run, message):
     try:
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         search_action = re.search("build|BUILD|Build|Собрать|сборка|собрать|билд|сбилди|deploy|Deploy|обнови|update|Update|UPDATE|Обнови|деплой", message.text)
-        search_action = search_action.group(0)
+        if search_action != None:
+            search_action = search_action.group(0)
         if search_action in ["build", "BUILD", "Build", "Собрать", "сборка", "собрать", "билд", "сбилди"]:
-            # try:
             jenkins.build_job('GISTEK_Poib/Build')
-            # except Exception:
-            #     bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
-            #     authentication(0)
-            #     jenkins.build_job('GISTEK_Poib/Build')
             text = "{} собирает ПОИБ".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется")
@@ -45,15 +41,16 @@ def poib_action(bot, errors, jenkins, test_run, message):
             else:
                 params = {"stand": stand, "version": tag}
                 issue_id = "отсутствует"
-            # try:
             jenkins.build_job('GISTEK_Poib/Update_App', params)
-            # except Exception:
-            #     bot.send_message(message.chat.id, "Это занимает больше времени чем планировалось изначально. Подождите пожалуйста.")
-            #     authentication(0)
-            #     jenkins.build_job('GISTEK_Poib/Update_App', params)
             text = "..еще 2 минуты и ПОИБ на {} обновится до версии {}, задача {}".format(stand, tag, issue_id)
             bot.send_message(message.chat.id, text)
             job = jenkins.get_job('GISTEK_Poib/Update_App')
             test_run(message, "poib", params, 120, job)
+        else:
+            bot.send_message(message.chat.id, "Что делать то?")
+            sti = random.choice(os.listdir("error_sti"))
+            sti = "error_sti/{}".format(sti)
+            sti = open(sti, 'rb')
+            bot.send_sticker(message.chat.id, sti)
     except Exception as e:
         errors(message)
