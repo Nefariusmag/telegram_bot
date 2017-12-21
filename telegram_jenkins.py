@@ -105,15 +105,13 @@ def errors(message):
     text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
     logging.error( u"%s", text)
     bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
-    # подгрузить стикер в память
-    sti = open("kill_sti/1.webp", 'rb')
     # отправить стикер
+    sti = open("kill_sti/1.webp", 'rb')
     bot.send_sticker(message.chat.id, sti)
     text = "Ошибка при работе с ботом у {}".format(message.chat.id)
-    bot.send_message("-216046302", text)
-    # подгрузить стикер в память
-    sti = open("kill_sti/2.webp", 'rb')
     # отправить стикер
+    bot.send_message("-216046302", text)
+    sti = open("kill_sti/2.webp", 'rb')
     bot.send_sticker("-216046302", sti)
 
 # функция проверки на выполенния джобы в jenkins
@@ -145,9 +143,10 @@ def test_run(message, arm, params, time_timeout, job):
     else:
         text = "Ошибка, посмотрите логи и обратитесь к администратору"
         bot.send_message(message.chat.id, text)
-        # подгрузить стикер в память
-        sti = open("logs.webp", 'rb')
         # отправить стикер
+        sti = random.choice(os.listdir("logs_sti"))
+        sti = "logs_sti/{}".format(sti)
+        sti = open(sti, 'rb')
         bot.send_sticker(message.chat.id, sti)
         text = "{} не выполнилось {} с {}, сейчас посмотрим логи".format(name_user, arm, params)
         logging.error( u"%s", text)
@@ -1656,7 +1655,7 @@ def main_pizi_repost_buld_deploy(message):
 def main_arm_action(message):
     secure(message)
     if user_true == "true":
-        arm.arm_action(bot, errors, jenkins, message)
+        arm.arm_action(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['restart_system'])
 def main_restart_action(message):
@@ -1680,7 +1679,7 @@ def main_integration_action(message):
 def main_pentaho_action(message):
     secure(message)
     if user_true == "true":
-        pentaho.pentaho_action(bot, errors, jenkins, message)
+        pentaho.pentaho_action(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['gistek_portal'])
 def main_portal_action(message):
