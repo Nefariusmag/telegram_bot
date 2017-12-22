@@ -18,10 +18,23 @@ yum install python-setuptools python34-setuptools python-pip
 pip3 install pyTelegramBotAPI jenkinsapi python-gitlab
 pip install logging
 
-Добавить в крон:
-*/15 * * * * cd ~/telegram_bot && ./start.sh start &
+cd telegram_bot && ./start.sh start
 
 --History:
+
+---2.17
+
+Добавил:
+Стикеры
+Обработку однострочных команд
+/pizi
+/build_arm
+/restart
+/poib
+/integration
+/pentaho
+/portal
+/mobile
 
 ---2.16
 
