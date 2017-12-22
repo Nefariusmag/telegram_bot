@@ -26,6 +26,10 @@ def pentaho_action(bot, errors, jenkins, test_run, message):
                 logging.warning( u"%s", text)
                 text = "..еще 2 минуты приложение {} для пентахи соберется".format(arm)
                 bot.send_message(message.chat.id, text)
+                sti = random.choice(os.listdir("deploy_sti"))
+                sti = "deploy_sti/{}".format(sti)
+                sti = open(sti, 'rb')
+                bot.send_sticker(message.chat.id, sti)
                 job = jenkins.get_job('GISTEK_Pentaho/Build_' + arm)
                 test_run(message, arm, "без параметров", 90, job)
             else: # если АРМ не указан
@@ -89,6 +93,10 @@ def pentaho_action(bot, errors, jenkins, test_run, message):
                 jenkins.build_job('GISTEK_Pentaho/Update_Pentaho', params)
                 text = "..еще минута и на пентахах на {} обновятся {} до версии {}, задача {}".format(stand, arm, tag, issue_id)
                 bot.send_message(message.chat.id, text)
+                sti = random.choice(os.listdir("deploy_sti"))
+                sti = "deploy_sti/{}".format(sti)
+                sti = open(sti, 'rb')
+                bot.send_sticker(message.chat.id, sti)                
                 job = jenkins.get_job('GISTEK_Pentaho/Update_Pentaho')
                 test_run(message, arm, params, 70, job)
             else: # не указан тег или приложение

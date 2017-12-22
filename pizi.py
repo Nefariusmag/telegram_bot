@@ -12,6 +12,10 @@ def pizi_action(bot, errors, jenkins, test_run, message):
             text = "{} собирает Сбор".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще пара минут и приложения для Cбора соберутся")
+            sti = random.choice(os.listdir("deploy_sti"))
+            sti = "deploy_sti/{}".format(sti)
+            sti = open(sti, 'rb')
+            bot.send_sticker(message.chat.id, sti)
             job = jenkins.get_job('GISTEK_Pizi/Build_App')
             test_run(message, "сбор", "Без оных", 150, job)
         elif search_action in ["deploy", "Deploy", "обнови", "update", "Update", "UPDATE", "Обнови", "деплой"]:
@@ -38,6 +42,10 @@ def pizi_action(bot, errors, jenkins, test_run, message):
             jenkins.build_job('GISTEK_Pizi/Update_App', params)
             text = "..еще 5 минут и Сбор на {} обновится, задача {}".format(stand, issue_id)
             bot.send_message(message.chat.id, text)
+            sti = random.choice(os.listdir("deploy_sti"))
+            sti = "deploy_sti/{}".format(sti)
+            sti = open(sti, 'rb')
+            bot.send_sticker(message.chat.id, sti)
             job = jenkins.get_job('GISTEK_Pizi/Update_App')
             test_run(message, "pizi", params, 120, job)
         else:

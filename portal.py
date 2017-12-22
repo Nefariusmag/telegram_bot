@@ -60,6 +60,10 @@ def portal_action(bot, errors, jenkins, test_run, message):
                 logging.warning( u"%s", text)
                 text = "..еще минута приложение {} для портала соберется".format(arm)
                 bot.send_message(message.chat.id, text)
+                sti = random.choice(os.listdir("deploy_sti"))
+                sti = "deploy_sti/{}".format(sti)
+                sti = open(sti, 'rb')
+                bot.send_sticker(message.chat.id, sti)
                 job = jenkins.get_job('GISTEK_Portal/' + arm)
                 test_run(message, arm, "без параметров", 60, job)
             else: # если АРМ не указан
@@ -152,6 +156,10 @@ def portal_action(bot, errors, jenkins, test_run, message):
                 jenkins.build_job('GISTEK_Portal/Update_App', params)
                 text = "..еще 2 минуты и на портале {} на {} обновится {} до версии {}, задача {}".format(open_close, stand, arm, tag, issue_id)
                 bot.send_message(message.chat.id, text)
+                sti = random.choice(os.listdir("deploy_sti"))
+                sti = "deploy_sti/{}".format(sti)
+                sti = open(sti, 'rb')
+                bot.send_sticker(message.chat.id, sti)                
                 job = jenkins.get_job('GISTEK_Poib/Update_App')
                 test_run(message, "poib", params, 120, job)
             else: # не указан тег \ приложение \ ОЧ\ЗЧ портала

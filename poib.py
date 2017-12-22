@@ -12,6 +12,10 @@ def poib_action(bot, errors, jenkins, test_run, message):
             text = "{} собирает ПОИБ".format(name_user)
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется")
+            sti = random.choice(os.listdir("deploy_sti"))
+            sti = "deploy_sti/{}".format(sti)
+            sti = open(sti, 'rb')
+            bot.send_sticker(message.chat.id, sti)
             job = jenkins.get_job('GISTEK_Poib/Build')
             test_run(message, "сборка ПОИБ", "без параметров", 65, job)
         elif search_action in ["deploy", "Deploy", "обнови", "update", "Update", "UPDATE", "Обнови", "деплой"]:
@@ -44,6 +48,10 @@ def poib_action(bot, errors, jenkins, test_run, message):
             jenkins.build_job('GISTEK_Poib/Update_App', params)
             text = "..еще 2 минуты и ПОИБ на {} обновится до версии {}, задача {}".format(stand, tag, issue_id)
             bot.send_message(message.chat.id, text)
+            sti = random.choice(os.listdir("deploy_sti"))
+            sti = "deploy_sti/{}".format(sti)
+            sti = open(sti, 'rb')
+            bot.send_sticker(message.chat.id, sti)
             job = jenkins.get_job('GISTEK_Poib/Update_App')
             test_run(message, "poib", params, 120, job)
         else:

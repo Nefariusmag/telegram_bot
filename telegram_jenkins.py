@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 
 # блокирования файла, чтобы не запускали несколько раз
 def lock_file(fname):
@@ -1644,13 +1644,6 @@ def main_pizi_action(message):
     if user_true == "true":
         pizi.pizi_action(bot, errors, jenkins, test_run, message)
 
-# принимает сообщения от начальника на деплой
-@bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
-def main_pizi_repost_buld_deploy(message):
-    secure(message)
-    if user_true == "true":
-        pizi.pizi_repost_build_deploy(bot, errors, jenkins, test_run, message)
-
 @bot.message_handler(commands=['gistek_build_arm'])
 def main_arm_action(message):
     secure(message)
@@ -1673,7 +1666,7 @@ def main_poib_action(message):
 def main_integration_action(message):
     secure(message)
     if user_true == "true":
-        integration.integration_action(bot, errors, jenkins, message)
+        integration.integration_action(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['gistek_pentaho'])
 def main_pentaho_action(message):
@@ -1691,7 +1684,14 @@ def main_portal_action(message):
 def main_mobile_action(message):
     secure(message)
     if user_true == "true":
-        mibile.mobile_action(bot, errors, jenkins, message)
+        mobile.mobile_action(bot, errors, jenkins, test_run, message)
+
+# принимает сообщения от начальника на деплой
+@bot.message_handler(func=lambda message: re.search(r"monitor |registration |formfillonline |sso-server |transport |afo |import-ps-ues-gisee |loadssb |ticket |classifier-view |classifier ", message.text))
+def main_pizi_repost_buld_deploy(message):
+    secure(message)
+    if user_true == "true":
+        pizi.pizi_repost_build_deploy(bot, errors, jenkins, test_run, message)
 
 while True:
     try:
