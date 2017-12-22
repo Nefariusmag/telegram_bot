@@ -1654,7 +1654,7 @@ def main_arm_action(message):
 def main_restart_action(message):
     secure(message)
     if user_true == "true":
-        restart.restart_action(bot, errors, jenkins, message)
+        restart.restart_action(bot, errors, jenkins, test_run, message)
 
 @bot.message_handler(commands=['gistek_poib'])
 def main_poib_action(message):
