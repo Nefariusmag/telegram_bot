@@ -1638,49 +1638,49 @@ def dev_job(message):
 
 import pizi, integration, poib, portal, mobile, pentaho, arm, restart
 
-@bot.message_handler(commands=['gistek_pizi'])
+@bot.message_handler(commands=['pizi'])
 def main_pizi_action(message):
     secure(message)
     if user_true == "true":
         pizi.pizi_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['gistek_build_arm'])
+@bot.message_handler(commands=['build_arm'])
 def main_arm_action(message):
     secure(message)
     if user_true == "true":
         arm.arm_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['restart_system'])
+@bot.message_handler(commands=['restart'])
 def main_restart_action(message):
     secure(message)
     if user_true == "true":
         restart.restart_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['gistek_poib'])
+@bot.message_handler(commands=['poib'])
 def main_poib_action(message):
     secure(message)
     if user_true == "true":
         poib.poib_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['gistek_integration'])
+@bot.message_handler(commands=['integration'])
 def main_integration_action(message):
     secure(message)
     if user_true == "true":
         integration.integration_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['gistek_pentaho'])
+@bot.message_handler(commands=['pentaho'])
 def main_pentaho_action(message):
     secure(message)
     if user_true == "true":
         pentaho.pentaho_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['gistek_portal'])
+@bot.message_handler(commands=['portal'])
 def main_portal_action(message):
     secure(message)
     if user_true == "true":
         portal.portal_action(bot, errors, jenkins, test_run, message)
 
-@bot.message_handler(commands=['gistek_mobile'])
+@bot.message_handler(commands=['mobile'])
 def main_mobile_action(message):
     secure(message)
     if user_true == "true":
