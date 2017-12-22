@@ -9,7 +9,7 @@ if [ "$status" == "install" ]; then
 		sudo pip install logging
 elif [ "$status" == "start" ]; then
     lockfile -r 0 file.lock || exit 1
-    ./telegram_jenkins.py &
+    python3 ./telegram_jenkins.py &
     if [ "$?" == "0"  ]; then
         rm -f file.lock
         exit 1
