@@ -1508,7 +1508,7 @@ def system_select_restart(message):
             menu_help(message)
         else:
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
+            markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho_all', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
             msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
             bot.register_next_step_handler(msg, system_job_jenkins)
     except Exception as e:
