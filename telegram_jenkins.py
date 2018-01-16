@@ -102,13 +102,13 @@ def secure_dev(message):
 
 # функция сообщения об ошибке
 def errors(message):
-    text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
+    text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(locals())
     logging.error( u"%s", text)
     bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
     # отправить стикер
     sti = open("kill_sti/1.webp", 'rb')
     bot.send_sticker(message.chat.id, sti)
-    text = "Ошибка при работе с ботом у {}".format(message.chat.id)
+    text = "Ошибка при работе с ботом у {}".format(message.chat.username)
     # отправить стикер
     bot.send_message("-216046302", text)
     sti = open("kill_sti/2.webp", 'rb')
