@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re, logging
+import re, logging, os, random
 
 def pizi_action(bot, errors, jenkins, test_run, message):
     try:

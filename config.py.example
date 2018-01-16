@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 url_jenkins = "http://jenkins.ru"
 url_jenkins2 = "http://jenkins-2.ru"
 username = "user-jenkins"

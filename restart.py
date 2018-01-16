@@ -5,7 +5,7 @@ def restart_action(bot, errors, jenkins, test_run, message):
     try:
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         # проверка на приложение
-        search_arm = re.search(r"pizi|pizi_app|пизи|poib|поиб|portal_open|портал_оч|portal_close|портал_зч|pentaho|пентахи|пентахо|pentaho_oil_gas|пентахо_оил_гас|pentaho_ee|пентахо_ее|pentaho_electro|пентахо_електро|пентахо_электро|pentaho_integr|пентахо_интегр|пентаха_интеграционная|pentaho_coal|пентахо_коал|пентаха_уголь|robot|робот", message.text)
+        search_arm = re.search(r"pizi|pizi_app|пизи|poib|поиб|portal_open|портал_оч|portal_close|портал_зч|pentaho_all|все пентахи|пентахи|pentaho_oil_gas|пентахо_оил_гас|pentaho_ee|пентахо_ее|pentaho_electro|пентахо_електро|пентахо_электро|pentaho_integr|пентахо_интегр|пентаха_интеграционная|pentaho_coal|пентахо_коал|пентаха_уголь|robot|робот", message.text)
         if search_arm != None:
             arm = search_arm.group(0)
             if arm in ["pizi_app", "pizi", "пизи"]:
@@ -14,8 +14,8 @@ def restart_action(bot, errors, jenkins, test_run, message):
                 arm = "portal_open"
             if arm in ["portal_close", "портал_зч"]:
                 arm = "portal_close"
-            if arm in ["pentaho", "пентахи", "пентахо"]:
-                arm = "pentaho"
+            if arm in ["pentaho_all", "все пентахи", "пентахи"]:
+                arm = "pentaho_all"
             if arm in ["pentaho_oil_gas"]:
                 arm = "pentaho_oil_gas"
             if arm in ["pentaho_ee", "пентахо_ее"]:

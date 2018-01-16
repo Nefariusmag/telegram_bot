@@ -102,13 +102,13 @@ def secure_dev(message):
 
 # функция сообщения об ошибке
 def errors(message):
-    text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(globals())
+    text = "Ошибочка вышла. Соберем тут все параметры: \n{}".format(locals())
     logging.error( u"%s", text)
     bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
     # отправить стикер
     sti = open("kill_sti/1.webp", 'rb')
     bot.send_sticker(message.chat.id, sti)
-    text = "Ошибка при работе с ботом у {}".format(message.chat.id)
+    text = "Ошибка при работе с ботом у {}".format(message.chat.username)
     # отправить стикер
     bot.send_message("-216046302", text)
     sti = open("kill_sti/2.webp", 'rb')
@@ -1508,7 +1508,7 @@ def system_select_restart(message):
             menu_help(message)
         else:
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
+            markup.add('pizi_app', 'poib', 'portal_open', 'portal_close', 'pentaho_all', 'pentaho_oil_gas', 'pentaho_ee', 'pentaho_electro', 'pentaho_integr', "pentaho_coal", 'robot')
             msg = bot.reply_to(message, "Выберите что будем перезагружать:", reply_markup=markup)
             bot.register_next_step_handler(msg, system_job_jenkins)
     except Exception as e:
