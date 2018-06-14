@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 # блокирования файла, чтобы не запускали несколько раз
 def lock_file(fname):
     import fcntl
@@ -20,7 +19,8 @@ from jenkinsapi.jenkins import Jenkins
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO, filename = u'telegram_bot.log')
 
 import config
-from telebot import types
+from telebot import types, apihelper
+apihelper.proxy = {'https':'socks5://' + config.proxy_server}
 
 bot = telebot.TeleBot(config.token)
 
@@ -275,7 +275,7 @@ def arm_stand_select(message):
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
-        markup.add('REA_TEST', 'PK', 'PI', "Назад в главное меню")
+        markup.add('DKP', 'ZERO', 'REA_TEST', 'PK', 'PI', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
         bot.register_next_step_handler(msg, arm_select)
 
@@ -396,7 +396,7 @@ def pentaho_app_select(message):
             bot.register_next_step_handler(msg, pentaho_build_job_jenkins)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PK', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, pentaho_app_2_select)
         if var.build_deploy == "Назад в главное меню":
@@ -570,7 +570,7 @@ def portal_app_select(message):
             bot.register_next_step_handler(msg, portal_build_job_jenkins)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PK', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд:", reply_markup=markup)
             bot.register_next_step_handler(msg, portal_public_internal_select)
         if var.build_deploy == "Назад в главное меню":
@@ -828,7 +828,7 @@ def mobile_action_select_2(message):
             bot.register_next_step_handler(msg, mobile_job_build_jenkins)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, mobile_app_select)
         if var.build_deploy == "Назад в главное меню":
@@ -941,12 +941,12 @@ def integration_app_select(message):
         var.build_deploy = build_deploy
         if var.build_deploy == "Build":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_build_stand_select)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, integration_stand_select)
         if var.build_deploy == "Назад в главное меню":
@@ -1173,7 +1173,7 @@ def pizi_stand_select(message):
             menu_help(message)
         if var.build_deploy == "Deploy" or var.build_deploy == "Build_and_Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PK', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PK', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, pizi_app_select)
         if var.build_deploy == "Build":
@@ -1187,7 +1187,7 @@ def pizi_app_select(message):
         var = user_dict[chat_id]
         stand = message.text
         var.stand = stand
-        if var.stand == "PI" or var.stand == "PK":
+        if var.stand == "PI" or var.stand == "PK" or var.stand = 'REA_TEST' or var.stand == 'ZERO':
             secure(message)
             if user_true == "true":
                 pass
@@ -1397,7 +1397,7 @@ def poib_select(message):
             menu_help(message)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-            markup.add('REA_TEST', 'PI')
+            markup.add('DKP', 'ZERO', 'REA_TEST', 'PI')
             msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
             bot.register_next_step_handler(msg, poib_app_select)
         if var.build_deploy == "Назад в главное меню":
@@ -1491,7 +1491,7 @@ def system_action_select(message):
         global name_user
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
         markup = types.ReplyKeyboardMarkup(row_width=3, one_time_keyboard=True)
-        markup.add('REA_TEST', 'PK', 'PI', "Назад в главное меню")
+        markup.add('DKP', 'ZERO', 'REA_TEST', 'PK', 'PI', "Назад в главное меню")
         msg = bot.reply_to(message, "Выберите стенд", reply_markup=markup)
         bot.register_next_step_handler(msg, system_select_restart)
 

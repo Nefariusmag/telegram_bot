@@ -28,7 +28,7 @@ def mobile_action(bot, errors, jenkins, test_run, message):
             else:
                 tag = None
             # ищем стенд
-            search_stand = re.search(r"ПИ|пи|PI|pi|ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп", message.text)
+            search_stand = re.search(r"ПИ|пи|PI|pi|ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп|DKP|dkp|zero|ZERO", message.text)
             if search_stand != None:
                 search_stand = search_stand.group(0)
             if search_stand in ["ПК", "пк", "PK", "pk"]:
@@ -37,9 +37,13 @@ def mobile_action(bot, errors, jenkins, test_run, message):
                 stand = "PI"
             elif search_stand in ["REA_TEST", "rea_test", "PP", "pp", "ПП", "пп"]:
                 stand = "REA_TEST"
+            elif search_stand in ["ZERO", "zero", "зеро", "зиро", "нулевой"]:
+                stand = "ZERO"
+            elif search_stand in ["DKP", "dkp", "дкп", "ДКП"]:
+                stand = "DKP"
             else:
-                stand = "REA_TEST"
-                bot.send_message(message.chat.id, "Без стенда я не могу. Пусть это будет ПП")
+                stand = "DKP"
+                bot.send_message(message.chat.id, "Вы не указали стенд, но подумал я решил за вас и решил, что это будет " + stand)
             # ищем задачу (для сборки приложения)
             search_issue = re.search(r"#[0-9]{5}", message.text)
             if search_issue != None:
@@ -66,7 +70,7 @@ def mobile_action(bot, errors, jenkins, test_run, message):
                 sti = random.choice(os.listdir("deploy_sti"))
                 sti = "deploy_sti/{}".format(sti)
                 sti = open(sti, 'rb')
-                bot.send_sticker(message.chat.id, sti)                
+                bot.send_sticker(message.chat.id, sti)
                 bot.send_message(message.chat.id, text)
                 job = jenkins.get_job('GISTEK_MobileApp/Build_' + arm)
                 test_run(message, arm, params, 160, job)

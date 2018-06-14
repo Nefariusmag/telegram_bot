@@ -19,7 +19,7 @@ def pizi_action(bot, errors, jenkins, test_run, message):
             job = jenkins.get_job('GISTEK_Pizi/Build_App')
             test_run(message, "сбор", "Без оных", 150, job)
         elif search_action in ["deploy", "Deploy", "обнови", "update", "Update", "UPDATE", "Обнови", "деплой"]:
-            search_stand = re.search(r"ПИ|пи|PI|pi |ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп", message.text)
+            search_stand = re.search(r"ПИ|пи|PI|pi |ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп|DKP|dkp|zero|ZERO", message.text)
             if search_stand != None:
                 search_stand = search_stand.group(0)
             if search_stand in ["ПК", "пк", "PK", "pk"]:
@@ -28,9 +28,13 @@ def pizi_action(bot, errors, jenkins, test_run, message):
                 stand = "PI"
             elif search_stand in ["REA_TEST", "rea_test", "PP", "pp", "ПП", "пп"]:
                 stand = "REA_TEST"
+            elif search_stand in ["ZERO", "zero", "зеро", "зиро", "нулевой"]:
+                stand = "ZERO"
+            elif search_stand in ["DKP", "dkp", "дкп", "ДКП"]:
+                stand = "DKP"
             else:
-                bot.send_message(message.chat.id, "Вы не указали стенд, но подумал я решил за вас и решил, что это будет тестовый")
-                stand = "REA_TEST"
+                stand = "DKP"
+                bot.send_message(message.chat.id, "Вы не указали стенд, но подумал я решил за вас и решил, что это будет " + stand)
             search_issue = re.search(r"#[0-9]{5}", message.text)
             if search_issue != None:
                 search_issue = search_issue.group(0)

@@ -15,7 +15,7 @@ config.py
 apt-get install python3 python-setuptools python-pip
 yum install python-setuptools python34-setuptools python-pip
 
-pip3 install pyTelegramBotAPI jenkinsapi python-gitlab
+pip3 install -r requirements.txt
 pip install logging
 
 cd telegram_bot && ./start.sh start
