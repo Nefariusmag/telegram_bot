@@ -1187,7 +1187,7 @@ def pizi_app_select(message):
         var = user_dict[chat_id]
         stand = message.text
         var.stand = stand
-        if var.stand == "PI" or var.stand == "PK" or var.stand = 'REA_TEST' or var.stand == 'ZERO':
+        if var.stand == "PI" or var.stand == "PK" or var.stand == 'REA_TEST' or var.stand == 'ZERO':
             secure(message)
             if user_true == "true":
                 pass
