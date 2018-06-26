@@ -8,8 +8,12 @@ from telebot import types, apihelper
 bot = telebot.TeleBot('357145828:AAHCACe_5lUryOB1MdCGUai2p_-SHs5VFek')
 
 # список прокси серверов
-list_proxy = ('79.129.17.195:5373', '193.112.141.244:1080', 'antimalware:eL2S5JbU@148.251.151.141:1080', '50.4.201.158:10200')
-
+# list_proxy = ('79.129.17.195:5373', '193.112.141.244:1080', 'antimalware:eL2S5JbU@148.251.151.141:1080', '50.4.201.158:10200', '121860960:FO8qJhxT@phobos.public.opennetwork.cc:1090', '121860960:FO8qJhxT@deimos.public.opennetwork.cc:1090', 'userid00wa:ZY1iTEi4@185.36.191.39:6398')
+import urllib.request
+url = 'http://distr-repo-i.gistek.lanit.ru/repo/proxy_list.py'
+urllib.request.urlretrieve(url, './proxy_list.py')
+import proxy_list
+list_proxy = proxy_list.list_proxy
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', dest='work', default='false',  help="Проверка на разрешение на отправку сообщения")
