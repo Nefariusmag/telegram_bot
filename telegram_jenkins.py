@@ -1,31 +1,17 @@
 # -*- coding: utf-8 -*-
 
-# блокирования файла, чтобы не запускали несколько раз
-def lock_file(fname):
-    import fcntl
-    _lock_file = open(fname, 'a+')
-    try:
-        fcntl.flock(_lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        return "Процесс уже используется."
-    return _lock_file
-
-lock = lock_file('telegram_jenkins.py')
-
-import time, os, re, logging, jenkinsapi, telebot, random
+import time, os, re, logging, jenkinsapi, telebot, random, config, gitlab
 
 from jenkinsapi.jenkins import Jenkins
-# логирование, обозначается уровень логирования INFO/DEBUG/ERROR/CRITICAL
-logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO, filename = u'telegram_bot.log')
-
-import config
 from telebot import types, apihelper
+# логирование, обозначается уровень логирования INFO/DEBUG/ERROR/CRITICAL
+logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO)
+# logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.INFO, filename = u'telegram_bot.log')
+
 apihelper.proxy = {'https':'socks5://' + config.proxy_server}
 
 bot = telebot.TeleBot(config.token)
-
-import gitlab
-gl = gitlab.Gitlab(config.url_gitlab, config.token_gitlab)
+gl = gitlab.Gitlab(config.url_gitlab, config.token_gitlab, api_version=3)
 gl.auth()
 
 # авторизация в jenkins'ах (зацикленаня, чтобы точно выполнилась)
@@ -45,7 +31,6 @@ def authentication(arg):
 authentication(0)
 
 user_dict = {}
-
 # класс для переменных что используют функции
 class Var:
     def __init__(self, name):
@@ -1393,7 +1378,7 @@ def poib_select(message):
             logging.warning( u"%s", text)
             bot.send_message(message.chat.id, "..еще минута и ПОИБ соберется")
             job = jenkins.get_job('GISTEK_Poib/Build')
-            test_run(message, "сборка ПОИБ", "без параметров", 65, job)
+            test_run(message, "сборка ПОИБ", "без параметров", 230, job)
             menu_help(message)
         if var.build_deploy == "Deploy":
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
@@ -1694,9 +1679,10 @@ def main_pizi_repost_buld_deploy(message):
         pizi.pizi_repost_build_deploy(bot, errors, jenkins, test_run, message)
 
 while True:
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        text = "Ошибка соединения, перелогиниваемся."
-        logging.warning( u"%s", text)
-        authentication(0)
+    # try:
+    #     bot.polling(none_stop=True)
+    # except Exception as e:
+    #     text = "Ошибка соединения, перелогиниваемся."
+    #     logging.warning( u"%s", text)
+    #     authentication(0)
+    bot.polling(none_stop=True)

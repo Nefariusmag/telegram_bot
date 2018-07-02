@@ -1,0 +1,14 @@
+version: '3.5'
+services:
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nexus.dkp.lanit.ru:888/telegram-bot
+    restart: always
+    # ports:
+    #   - 80:80
+
+networks:
+  default: {}
