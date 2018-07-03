@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re, logging, random, os
 
+
 def portal_action(bot, errors, jenkins, test_run, message):
     try:
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
@@ -41,7 +42,7 @@ def portal_action(bot, errors, jenkins, test_run, message):
                 if arm in ["urc-theme", "urc"]:
                     arm = "urc-theme"
                 if arm == "reports-display-portlet": # ищем стенд для особых случаев
-                    search_stand = re.search(r"ПИ |пи |PI |pi |ПК |пк |PK |pk |REA_TEST |rea_test |PP |pp |ПП |пп ", message.text)
+                    search_stand = re.search(r"ПИ |пи |PI |pi |ПК |пк |PK |pk |REA_TEST |rea_test |PP |pp |ПП |пп |DKP |dkp |zero |ZERO ", message.text)
                     if search_stand != None:
                         search_stand = search_stand.group(0)
                     if search_stand in ["ПК", "пк", "PK", "pk"]:
@@ -50,8 +51,13 @@ def portal_action(bot, errors, jenkins, test_run, message):
                         stand = "PI"
                     elif search_stand in ["REA_TEST", "rea_test", "PP", "pp", "ПП", "пп"]:
                         stand = "REA_TEST"
+                    elif search_stand in ["ZERO", "zero", "зеро", "зиро", "нулевой"]:
+                        stand = "ZERO"
+                    elif search_stand in ["DKP", "dkp", "дкп", "ДКП"]:
+                        stand = "DKP"
                     else:
-                        stand = "REA_TEST"
+                        stand = "DKP"
+                        bot.send_message(message.chat.id, "Вы не указали стенд, но подумал я решил за вас и решил, что это будет " + stand)
                     params = {"stand": stand}
                     jenkins.build_job('GISTEK_Portal/' + arm, params)
                 else: # обычная сборка без указания теста
@@ -159,7 +165,7 @@ def portal_action(bot, errors, jenkins, test_run, message):
                 sti = random.choice(os.listdir("deploy_sti"))
                 sti = "deploy_sti/{}".format(sti)
                 sti = open(sti, 'rb')
-                bot.send_sticker(message.chat.id, sti)                
+                bot.send_sticker(message.chat.id, sti)
                 job = jenkins.get_job('GISTEK_Poib/Update_App')
                 test_run(message, "poib", params, 120, job)
             else: # не указан тег \ приложение \ ОЧ\ЗЧ портала

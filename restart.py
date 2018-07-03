@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re, logging, random, os
 
+
 def restart_action(bot, errors, jenkins, test_run, message):
     try:
         name_user = "{}({}):".format(message.chat.username, message.chat.id)
@@ -31,7 +32,7 @@ def restart_action(bot, errors, jenkins, test_run, message):
         else:
             arm = None
         # проверка на стенд
-        search_stand = re.search(r"ПИ|пи|PI|pi|ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп", message.text)
+        search_stand = re.search(r"ПИ|пи|PI|pi|ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп|DKP|dkp|zero|ZERO", message.text)
         if search_stand != None:
             search_stand = search_stand.group(0)
         if search_stand in ["ПК", "пк", "PK", "pk"]:
@@ -40,9 +41,13 @@ def restart_action(bot, errors, jenkins, test_run, message):
             stand = "PI"
         elif search_stand in ["REA_TEST", "rea_test", "PP", "pp", "ПП", "пп"]:
             stand = "REA_TEST"
+        elif search_stand in ["ZERO", "zero", "зеро", "зиро", "нулевой"]:
+            stand = "ZERO"
+        elif search_stand in ["DKP", "dkp", "дкп", "ДКП"]:
+            stand = "DKP"
         else:
-            stand = "REA_TEST"
-            bot.send_message(message.chat.id, "Стенд не указали, будет тест")
+            stand = "DKP"
+            bot.send_message(message.chat.id, "Вы не указали стенд, но подумал я решил за вас и решил, что это будет " + stand)
         # проверка на указонное приложение
         if arm != None:
             params = {"stand": stand, "system": arm}
