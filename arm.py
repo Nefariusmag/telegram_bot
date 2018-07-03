@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re, logging, random, os
 
+
 def arm_action(bot, errors, jenkins, test_run, message):
     try:
         name_user = "{}({}):".format(message.chat.username, message.chat.id)

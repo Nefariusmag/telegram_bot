@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-
-token = '<token-telegram>'
-url_jenkins = "http://jenkins.ru"
-url_jenkins2 = "http://jenkins-2.ru"
-username = "user-jenkins"
-password = "pass-jenkins"
-url_gitlab = "http://gitlab"
-token_gitlab = 'token-gitlab'
-proxy_server = '<login>:<pass>@<ip>:<port>'
 true_id = [n1, n2, n3]
 true_id_dev = [n1, n2, n3, n4, n5, n6, n7]
+import os
+token = os.getenv('TOKEN_TELEGRAM', '')
+url_jenkins = os.getenv('URL_JENKINS_1', 'http://jenkins.ru')
+url_jenkins2 = os.getenv('URL_JENKINS_2', 'http://jenkins-2.ru')
+username = os.getenv('USER_JENKINS', '')
+password = os.getenv('PASS_JENKINS', '')
+url_gitlab = os.getenv('URL_GITLAB', 'http://gitlab')
+token_gitlab = os.getenv('TOKEN_GITLAB', '')
+proxy_server = os.getenv('PROXY_SOCKS5', '<login>:<pass>@<ip>:<port>')
