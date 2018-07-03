@@ -5,7 +5,7 @@ import telebot, argparse, random
 from telebot import types, apihelper
 
 # API key телеграмовского бота
-bot = telebot.TeleBot('357145828:AAHCACe_5lUryOB1MdCGUai2p_-SHs5VFek')
+bot = telebot.TeleBot('')
 
 # список прокси серверов
 # list_proxy = ('79.129.17.195:5373', '193.112.141.244:1080', 'antimalware:eL2S5JbU@148.251.151.141:1080', '50.4.201.158:10200', '121860960:FO8qJhxT@phobos.public.opennetwork.cc:1090', '121860960:FO8qJhxT@deimos.public.opennetwork.cc:1090', 'userid00wa:ZY1iTEi4@185.36.191.39:6398')
@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-w', dest='work', default='false',  help="Проверка на разрешение на отправку сообщения")
 parser.add_argument('-m', dest='message', default='Я родился!', help="Сообщение, которое будет отправлено в чат")
 parser.add_argument('-t', dest='issue_id', type=int,  default=0, help="Номер задачи для перевода в тестирование, 0 - без задачи")
-parser.add_argument('-id', dest='chat_id', default='-216046302', help="id телеграма чата куда будет отправлено сообщение")
+parser.add_argument('-id', dest='chat_id', default='', help="id телеграма чата куда будет отправлено сообщение")
 args = parser.parse_args()
 
 if args.issue_id > 0:
@@ -40,4 +40,4 @@ if args.work == "true":
             print("Не достаточно быстрый: " + proxy_server)
 
 # запускается с параметрами:
-# ./telegram_message.py -w ${telegram_message} -id -217174145 -t ${issue_id} -m "some TEXT"
+# ./telegram_message.py -w ${telegram_message} -id '' -t ${issue_id} -m "some TEXT"
