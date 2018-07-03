@@ -4,7 +4,8 @@
 
 Установить `docker` и `docker-compose`
 
-Добавить переменные в `config.py` по аналогии с `config.py.example`
+Сделать конфиг `config.py` по аналогии с `config.py.example`
+Создать `.env` по аналогии c `.env.example`
 
 Запустить приложение
 `docker-compose up -d`
