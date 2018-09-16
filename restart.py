@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re, logging, random, os
+import re, logging, random, os, config
 
 
 def restart_action(bot, errors, jenkins, test_run, message):
@@ -56,18 +56,12 @@ def restart_action(bot, errors, jenkins, test_run, message):
             logging.warning( u"%s", text)
             text = "..еще минута приложение {} на {} перезапустится".format(arm, stand)
             bot.send_message(message.chat.id, text)
-            sti = random.choice(os.listdir("deploy_sti"))
-            sti = "deploy_sti/{}".format(sti)
-            sti = open(sti, 'rb')
-            bot.send_sticker(message.chat.id, sti)
+            bot.send_sticker(message.chat.id, random.choice(config.deploy_sticker))
             job = jenkins.get_job('GISTEK_Restart')
             test_run(message, arm, params, 60, job)
         elif arm == None:
             bot.send_message(message.chat.id, "Я хоть и умный, но мне всё таки нужено знать, что собирать ((")
             # отправить стикер
-            sti = random.choice(os.listdir("error_sti"))
-            sti = "error_sti/{}".format(sti)
-            sti = open(sti, 'rb')
-            bot.send_sticker(message.chat.id, sti)
+            bot.send_sticker(message.chat.id, random.choice(config.error_sticker))
     except Exception as e:
         errors(message)

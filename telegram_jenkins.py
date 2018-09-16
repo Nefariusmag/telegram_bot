@@ -12,7 +12,7 @@ logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level
 apihelper.proxy = {'https':'socks5://' + config.proxy_server}
 
 bot = telebot.TeleBot(config.token)
-gl = gitlab.Gitlab(config.url_gitlab, config.token_gitlab, api_version=3)
+gl = gitlab.Gitlab(config.url_gitlab, config.token_gitlab, api_version=4)
 gl.auth()
 
 
@@ -99,13 +99,11 @@ def errors(message):
     logging.error(u"%s", text)
     bot.reply_to(message, 'Вышла ошибка, обратитесь к @nefariusmag.')
     # отправить стикер
-    sti = open("kill_sti/1.webp", 'rb')
-    bot.send_sticker(message.chat.id, sti)
+    bot.send_sticker(message.chat.id, random.choice(config.kill_sticker))
     text = "Ошибка при работе с ботом у {}".format(message.chat.username)
     # отправить стикер
     bot.send_message("-216046302", text)
-    sti = open("kill_sti/2.webp", 'rb')
-    bot.send_sticker("-216046302", sti)
+    bot.send_sticker("-216046302", random.choice(config.kill_sticker))
 
 
 # функция проверки на выполенния джобы в jenkins
@@ -124,24 +122,14 @@ def test_run(message, arm, params, time_timeout, job):
     if task_status == "True":
         text = "Я сам в шоке, но {} готово!".format(job)
         bot.send_message(message.chat.id, text)
-        # получить рандомный стикер из папки
-        sti = random.choice(os.listdir("true_sti"))
-        # добавить к стикеру путь до папки
-        sti = "true_sti/{}".format(sti)
-        # подгрузить стикеры в память
-        sti = open(sti, 'rb')
-        # отправить стикер
-        bot.send_sticker(message.chat.id, sti)
+        bot.send_sticker(message.chat.id, random.choice(config.true_sticker))
         text = "{} выполнилось {} c {}".format(name_user, arm, params)
         logging.warning(u"%s", text)
     else:
         text = "Ошибка, посмотрите логи и обратитесь к администратору"
         bot.send_message(message.chat.id, text)
         # отправить стикер
-        sti = random.choice(os.listdir("logs_sti"))
-        sti = "logs_sti/{}".format(sti)
-        sti = open(sti, 'rb')
-        bot.send_sticker(message.chat.id, sti)
+        bot.send_sticker(message.chat.id, random.choice(config.logs_sticker))
         text = "{} не выполнилось {} с {}, сейчас посмотрим логи".format(name_user, arm, params)
         logging.error(u"%s", text)
         # получение из jenkins логов из джобы
@@ -1464,7 +1452,7 @@ def poib_tag_select(message):
     var.arm = arm
     tag_gitlab("SECURITY/poib")
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add(item92, item93, item94, item95, item96, item97, item98, item99)
+    markup.add(item1, item2, item3, item4, item5, item6, item7, item8)
     msg = bot.reply_to(message, "Выберите номер версии (тег):", reply_markup=markup)
     bot.register_next_step_handler(msg, poib_issue_select)
 

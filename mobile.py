@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re, logging, random, os
+import re, logging, random, os, config
 
 
 def mobile_action(bot, errors, jenkins, test_run, message):
@@ -68,20 +68,14 @@ def mobile_action(bot, errors, jenkins, test_run, message):
                 text = "{} собирает {} для мобилки".format(name_user, arm)
                 logging.warning( u"%s", text)
                 text = "..еще пара минут и {} для мобилки соберется".format(arm)
-                sti = random.choice(os.listdir("deploy_sti"))
-                sti = "deploy_sti/{}".format(sti)
-                sti = open(sti, 'rb')
-                bot.send_sticker(message.chat.id, sti)
+                bot.send_sticker(message.chat.id, random.choice(config.deploy_sticker))
                 bot.send_message(message.chat.id, text)
                 job = jenkins.get_job('GISTEK_MobileApp/Build_' + arm)
                 test_run(message, arm, params, 160, job)
             else: # если АРМ не указан
                 bot.send_message(message.chat.id, "Я хоть и умный, но мне всё таки нужено знать, что собирать ((")
                 # отправить стикер
-                sti = random.choice(os.listdir("error_sti"))
-                sti = "error_sti/{}".format(sti)
-                sti = open(sti, 'rb')
-                bot.send_sticker(message.chat.id, sti)
+                bot.send_sticker(message.chat.id, random.choice(config.error_sticker))
         elif search_action in ["deploy", "Deploy", "обнови", "update", "Update", "UPDATE", "Обнови", "деплой"]:
             # проверка на стенд
             search_stand = re.search(r"ПИ|пи|PI|pi|ПК|пк|PK|pk|REA_TEST|rea_test|PP|pp|ПП|пп", message.text)
@@ -130,23 +124,14 @@ def mobile_action(bot, errors, jenkins, test_run, message):
                 jenkins.build_job('GISTEK_MobileApp/Update', params)
                 text = "..еще минута и для мобильного приложения на {} обновится {} до версии {}, задача {}".format(stand, arm, tag, issue_id)
                 bot.send_message(message.chat.id, text)
-                sti = random.choice(os.listdir("deploy_sti"))
-                sti = "deploy_sti/{}".format(sti)
-                sti = open(sti, 'rb')
-                bot.send_sticker(message.chat.id, sti)
+                bot.send_sticker(message.chat.id, random.choice(config.deploy_sticker))
                 job = jenkins.get_job('GISTEK_MobileApp/Update')
                 test_run(message, arm, params, 60, job)
             else: # не указан тег \ приложение \ ОЧ\ЗЧ портала
-                sti = random.choice(os.listdir("error_sti"))
-                sti = "error_sti/{}".format(sti)
-                sti = open(sti, 'rb')
-                bot.send_sticker(message.chat.id, sti)
+                bot.send_sticker(message.chat.id, random.choice(config.error_sticker))
         else:
             bot.send_message(message.chat.id, "Стоит указать что делать с этим - собрать? обновить?")
             # отправить стикер
-            sti = random.choice(os.listdir("error_sti"))
-            sti = "error_sti/{}".format(sti)
-            sti = open(sti, 'rb')
-            bot.send_sticker(message.chat.id, sti)
+            bot.send_sticker(message.chat.id, random.choice(config.error_sticker))
     except Exception as e:
         errors(message)
