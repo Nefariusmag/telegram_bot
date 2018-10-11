@@ -1,11 +1,10 @@
-FROM python:3.5
+FROM python:3.6
 MAINTAINER Erokhin Dmitry <derokhin@lanit.ru>
 USER root
-# закидываю файлы для работы
-COPY *.py /opt/
-COPY *.txt /opt/
-RUN mkdir /opt/deploy_sti && mkdir /opt/error_sti && mkdir /opt/kill_sti && mkdir /opt/logs_sti && mkdir /opt/true_sti
+COPY requirements.txt /opt/
 # установка нужных программ для работы
 RUN pip3 install -r /opt/requirements.txt
+# закидываю файлы для работы
+COPY *.py /opt/
 WORKDIR /opt
-ENTRYPOINT ["python", "telegram_jenkins.py"]
+ENTRYPOINT ["python", "main.py"]

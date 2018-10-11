@@ -1,12 +1,21 @@
 version: '3.3'
 services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - 5432:5432
+#    restart: always
   bot:
     env_file: .env
     build:
       context: .
       dockerfile: Dockerfile
     image: nefariusmag/telegram-bot:${VERSION_BOT}
-    restart: always
+    depends_on:
+      - postgres
+#    restart: always
 
 networks:
   default: {}
