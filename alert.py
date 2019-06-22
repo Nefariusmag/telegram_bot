@@ -27,9 +27,16 @@ def index():
 
 @app.route("/alert", methods=["POST"])
 def get_alert_message():
-    lamp = secure_filename(request.headers['lamp'])
+    try:
+        version_product = secure_filename(request.headers['version_product'])
+        component = secure_filename(request.headers['component'])
+        version_component = secure_filename(request.headers['version_component'])
+        url_test = secure_filename(request.headers['url_test'])
+        text = f'{component} version {version_component} on {version_product} is failed. {url_test}'
+    except KeyError:
+        text = "Didn't get all header that we need (version_product, component, version_component, url_test)"
     # logging.info(lamp)
-    send_message(chat_id, f'{lamp} is failed')
+    send_message(chat_id, text)
     # logging.info(res)
     return "OK"
 
