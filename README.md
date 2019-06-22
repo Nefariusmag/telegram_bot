@@ -1,11 +1,11 @@
-Телеграм бот для управления дженкиинсом для GISTEK
+#Telegram bot to alert about fail test
+
+Web server to get requests and resend to user in telegram
 
 --Setup:
 
-Установить `docker` и `docker-compose`
+Install `docker` и `docker-compose`
 
-Сделать конфиг `config.py` по аналогии с `config.py.example`
-Создать `.env` по аналогии c `.env.example`
+Create `.env` from `.env.example`, we need add TOKEN and URL PROXY
 
-Запустить приложение
-`docker-compose up -d`
+Run `docker-compose up -d`

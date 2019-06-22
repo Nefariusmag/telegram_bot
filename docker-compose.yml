@@ -5,8 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nefariusmag/telegram-bot:${VERSION_BOT}
+    image: alert-telegram
     restart: always
+    ports:
+      - 5000:5000
 
 networks:
   default: {}
